@@ -5,78 +5,28 @@
 package com.icerockdev.service.storage.storage
 
 import com.icerockdev.service.storage.dto.ObjectDto
-import com.icerockdev.service.storage.dto.S3ObjectDto
-import io.minio.BucketExistsArgs
-import io.minio.GetObjectArgs
-import io.minio.ListObjectsArgs
 import io.minio.MinioClient
-import io.minio.ObjectWriteResponse
-import io.minio.PutObjectArgs
-import io.minio.StatObjectArgs
-import io.minio.messages.Item
 import java.io.InputStream
 
 class S3Storage(private val minioClient: MinioClient, private val bucket: String) : Storage {
     override fun get(key: String): ObjectDto {
-        return try {
-            val stream: InputStream = minioClient.getObject(
-                GetObjectArgs.builder()
-                    .bucket(bucket)
-                    .`object`(key)
-                    .build()
-            )
-
-            S3ObjectDto(stream = stream)
-        } catch (exception: Exception) {
-            throw StorageException(message = exception.message)
-        }
+        TODO("Not yet implemented")
     }
 
     override fun list(prefix: String): List<ObjectDto> {
-        return try {
-            val resultIterator = minioClient.listObjects(ListObjectsArgs.builder().bucket(bucket).build())
-            val s3ObjectDtoList: MutableList<S3ObjectDto> = mutableListOf()
-            resultIterator.forEach { result ->
-                run {
-                    val item: Item = result.get()
-                    s3ObjectDtoList.add(S3ObjectDto(bucket = bucket, size = item.size()))
-                }
-            }
-            s3ObjectDtoList
-        } catch (exception: Exception) {
-            throw StorageException(message = exception.message)
-        }
+        TODO("Not yet implemented")
     }
 
     override fun isTargetExist(key: String): Boolean {
-        return try {
-            minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build())
-        } catch (exception: Exception) {
-            throw StorageException(message = exception.message)
-        }
+        TODO("Not yet implemented")
     }
 
     override fun isObjectExists(key: String): Boolean {
-        return try {
-            minioClient.statObject(StatObjectArgs.builder().bucket(bucket).`object`(key).build()) != null
-        } catch (exception: Exception) {
-            throw StorageException(message = exception.message)
-        }
+        TODO("Not yet implemented")
     }
 
     override fun put(key: String, stream: InputStream): ObjectDto {
-        return try {
-            val response: ObjectWriteResponse = minioClient.putObject(PutObjectArgs.builder()
-                .bucket(bucket)
-                .`object`(key)
-                .stream(stream, -1, 10485760)
-                .contentType("image/png")
-                .build())
-
-            S3ObjectDto()
-        } catch (exception: Exception) {
-            throw StorageException(message = exception.message)
-        }
+        TODO("Not yet implemented")
     }
 
     override fun copy(key: String, stream: InputStream): ObjectDto {

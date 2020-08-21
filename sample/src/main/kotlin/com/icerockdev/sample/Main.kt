@@ -8,7 +8,7 @@ import com.icerockdev.service.storage.config.AttachmentConfig
 import com.icerockdev.service.storage.config.ImageConfig
 import com.icerockdev.service.storage.config.PreviewConfig
 import com.icerockdev.service.storage.config.StorageConfig
-import com.icerockdev.service.storage.storage.S3Storage
+import com.icerockdev.service.storage.storage.MinIOStorage
 import io.github.cdimascio.dotenv.dotenv
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
@@ -23,6 +23,12 @@ import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.minio.MinioClient
+import java.net.URI
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.s3.S3AsyncClient
+import software.amazon.awssdk.services.s3.S3Configuration
 
 object Main {
     private val dotenv = dotenv {
@@ -32,18 +38,36 @@ object Main {
     // Setup config
     private val imageConfig: ImageConfig = ImageConfig("com/icerockdev/service/storage/storage/img")
     private val previewConfig: PreviewConfig = PreviewConfig("com/icerockdev/service/storage/storage/preview")
-    private val attachmentConfig: AttachmentConfig = AttachmentConfig("com/icerockdev/service/storage/storage/attachment")
+    private val attachmentConfig: AttachmentConfig =
+        AttachmentConfig("com/icerockdev/service/storage/storage/attachment")
     private val config: StorageConfig = StorageConfig(imageConfig, previewConfig, attachmentConfig)
 
     // Setup client
-    private val minioClient: MinioClient = MinioClient.builder()
+    private val minIOClient: MinioClient = MinioClient.builder()
         .endpoint(dotenv["S3_ENDPOINT"])
         .credentials(dotenv["MINIO_ACCESS_KEY"], dotenv["MINIO_SECRET_KEY"])
         .region(dotenv["S3_REGION"])
-        .build();
+        .build()
 
     // Setup storage
-    private val storage: S3Storage = S3Storage(minioClient = minioClient, bucket = dotenv["S3_BUCKET"] ?: "")
+    private val minIOStorage: MinIOStorage = MinIOStorage(minIOClient = minIOClient, bucket = dotenv["S3_BUCKET"] ?: "")
+
+    // Setup S3 client
+    private val s3Client = S3AsyncClient.builder()
+        .region(Region.of(dotenv["S3_REGION"]))
+        .endpointOverride(URI.create(dotenv["S3_ENDPOINT"] ?: ""))
+        .serviceConfiguration(
+            S3Configuration.builder()
+                .pathStyleAccessEnabled(true)
+                .checksumValidationEnabled(false)
+                .build()
+        )
+        .credentialsProvider(
+            StaticCredentialsProvider.create(
+                AwsBasicCredentials.create(dotenv["MINIO_ACCESS_KEY"], dotenv["MINIO_SECRET_KEY"])
+            )
+        )
+
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -66,7 +90,7 @@ object Main {
         multipart.forEachPart { part ->
             if (part is PartData.FileItem) {
                 part.streamProvider().use { stream ->
-                    storage.put(part.originalFileName ?: "", stream)
+                    minIOStorage.put(part.originalFileName ?: "", stream)
                 }
             }
             part.dispose()

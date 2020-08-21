@@ -22,6 +22,8 @@ val sourcesJar by tasks.registering(Jar::class) {
 dependencies {
     // Kotlin
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${properties["kotlin_version"]}")
+    // AWS S3 SDK
+    api("software.amazon.awssdk:s3:${properties["aws_sdk_s3_version"]}")
     // min.IO
     api("io.minio:minio:${properties["minio_version"]}")
     // Ktor

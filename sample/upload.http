@@ -1,0 +1,12 @@
+POST http://127.0.0.30:8080
+Accept: */*
+Cache-Control: no-cache
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="2020-08-20_22-12.png";
+
+< ./src/main/resources/2020-08-20_22-12.png
+
+--boundary--
+###

@@ -6,12 +6,13 @@ package com.icerockdev.service.storage.s3
 
 import software.amazon.awssdk.services.s3.S3Configuration
 import software.amazon.awssdk.services.s3.model.S3Object
+import java.io.FilterInputStream
 import java.io.InputStream
 import java.util.UUID
 
 // TODO: change return type for support file storage (if needed)
 interface IS3Storage {
-    fun get(bucket: String, key: String): InputStream?
+    fun get(bucket: String, key: String): FilterInputStream?
 
     fun list(bucket: String, prefix: String): List<S3Object>
 
@@ -26,6 +27,8 @@ interface IS3Storage {
     fun objectExists(bucket: String, key: String): Boolean
 
     fun put(bucket: String, key: String, stream: InputStream): Boolean
+
+    fun put(bucket: String, key: String, byteArray: ByteArray): Boolean
 
     fun copy(srcBucket: String, srcKey: String, dstBucket: String, dstKey: String): Boolean
 

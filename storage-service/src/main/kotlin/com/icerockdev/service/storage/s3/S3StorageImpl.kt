@@ -23,12 +23,13 @@ import software.amazon.awssdk.services.s3.model.ObjectCannedACL
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.services.s3.model.S3Exception
 import software.amazon.awssdk.services.s3.model.S3Object
+import java.io.FilterInputStream
 import java.io.InputStream
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 class S3StorageImpl(private val client: S3Client) : IS3Storage {
-    override fun get(bucket: String, key: String): InputStream? {
+    override fun get(bucket: String, key: String): FilterInputStream? {
         return try {
             client.getObject(GetObjectRequest.builder()
                 .bucket(bucket)
@@ -111,6 +112,15 @@ class S3StorageImpl(private val client: S3Client) : IS3Storage {
     }
 
     override fun put(bucket: String, key: String, stream: InputStream): Boolean {
+        return put(bucket, key, RequestBody.fromBytes(stream.readAllBytes()))
+    }
+
+    override fun put(bucket: String, key: String, byteArray: ByteArray): Boolean {
+        return put(bucket, key, RequestBody.fromBytes(byteArray))
+    }
+
+    // TODO: append any signature for put
+    private fun put(bucket: String, key: String, body: RequestBody): Boolean {
         val request = PutObjectRequest.builder()
             .bucket(bucket)
             .key(key)
@@ -118,7 +128,7 @@ class S3StorageImpl(private val client: S3Client) : IS3Storage {
             .build()
 
         return try {
-            client.putObject(request, RequestBody.fromBytes(stream.readAllBytes()))
+            client.putObject(request, body)
             true
         } catch (e: S3Exception) {
             false

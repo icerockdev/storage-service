@@ -1,29 +1,13 @@
 version: '3'
 services:
-  postgres:
-    image: gitlab.icerockdev.com:4567/docker/alpine-postgres-postgis-9.6:latest
-    stop_grace_period: 30s
+  minio:
+    image: minio/minio
     restart: always
-    logging: &logging
+    logging:
       driver: "json-file"
       options:
         max-size: "20m"
         max-file: "5"
-    environment:
-      POSTGRES_HOST: ${POSTGRES_HOST}
-      POSTGRES_PORT: ${POSTGRES_PORT}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_ROOT_PASSWORD: ${POSTGRES_ROOT_PASSWORD}
-    ports:
-      - ${APP_HOST}:5432:5432
-    volumes:
-      - ./postgresql-data:/var/lib/postgresql/data
-  minio:
-    image: minio/minio
-    restart: always
-    logging: *logging
     environment:
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
@@ -33,7 +17,5 @@ services:
       - ./data:/data
     command: 'server /data'
 volumes:
-  postgresql-data:
-    driver: local
   minio-data:
     driver: local

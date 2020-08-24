@@ -21,6 +21,10 @@ class S3Storage(private val client: S3Client) : Storage {
         TODO("Not yet implemented")
     }
 
+    override fun createBucket(bucket: String): Boolean {
+        TODO("Not yet implemented")
+    }
+
     override fun isObjectExists(bucket: String, key: String): Boolean {
         TODO("Not yet implemented")
     }

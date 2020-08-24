@@ -40,21 +40,12 @@ dependencies {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
-        jvmTarget = "1.8"
-    }
-}
-
-val jar by tasks.getting(Jar::class) {
-    archiveName = "sample.jar"
-    destinationDir = file("${project.rootDir}/build")
-    manifest {
-        attributes["Main-Class"] = application.mainClassName
-        attributes["Class-Path"] = configurations.runtimeClasspath.get().filter { it.name.endsWith("jar") }.joinToString { "libs/${it.name}" }
+        jvmTarget = JavaVersion.VERSION_11.toString()
     }
 }

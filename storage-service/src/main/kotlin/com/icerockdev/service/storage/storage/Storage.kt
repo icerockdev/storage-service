@@ -15,6 +15,8 @@ interface Storage {
 
     fun isBucketExist(bucket: String): Boolean
 
+    fun createBucket(bucket: String): Boolean
+
     fun isObjectExists(bucket: String, key: String): Boolean
 
     fun put(bucket: String, key: String, stream: InputStream): ObjectDto

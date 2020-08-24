@@ -4,6 +4,7 @@
 
 package com.icerockdev.service.storage.s3
 
+import software.amazon.awssdk.services.s3.S3Configuration
 import software.amazon.awssdk.services.s3.model.S3Object
 import java.io.InputStream
 import java.util.UUID
@@ -14,7 +15,7 @@ interface IS3Storage {
 
     fun list(bucket: String, prefix: String): List<S3Object>
 
-    fun isBucketExist(bucket: String): Boolean
+    fun bucketExist(bucket: String): Boolean
 
     fun createBucket(bucket: String): Boolean
 
@@ -22,7 +23,7 @@ interface IS3Storage {
 
     fun deleteBucketWithObjects(bucket: String): Boolean
 
-    fun isObjectExists(bucket: String, key: String): Boolean
+    fun objectExists(bucket: String, key: String): Boolean
 
     fun put(bucket: String, key: String, stream: InputStream): Boolean
 
@@ -37,3 +38,10 @@ interface IS3Storage {
         return UUID.randomUUID().toString().replace("-","/")
     }
 }
+
+val minioConfBuilder: S3Configuration =
+    S3Configuration
+        .builder()
+        .pathStyleAccessEnabled(true)
+        .checksumValidationEnabled(false)
+        .build()

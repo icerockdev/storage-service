@@ -53,7 +53,7 @@ class S3StorageImpl(private val client: S3Client) : IS3Storage {
         }
     }
 
-    override fun isBucketExist(bucket: String): Boolean {
+    override fun bucketExist(bucket: String): Boolean {
         return try {
             client.headBucket(HeadBucketRequest.builder().bucket(bucket).build())
             true
@@ -97,7 +97,7 @@ class S3StorageImpl(private val client: S3Client) : IS3Storage {
         return deleteBucket(bucket)
     }
 
-    override fun isObjectExists(bucket: String, key: String): Boolean {
+    override fun objectExists(bucket: String, key: String): Boolean {
         return try {
             client.headObject(HeadObjectRequest.builder()
                 .bucket(bucket)

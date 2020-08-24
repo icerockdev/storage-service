@@ -30,6 +30,7 @@ dependencies {
     // Kotlin
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${properties["kotlin_version"]}")
     // Ktor
+    implementation("io.ktor:ktor-server-core:${properties["ktor_version"]}")
     implementation("io.ktor:ktor-server-netty:${properties["ktor_version"]}")
     // Dotenv
     implementation("io.github.cdimascio:java-dotenv:${properties["java_dotenv_version"]}")

@@ -5,12 +5,14 @@
 //package com.icerockdev.service.storage
 //
 //import com.icerockdev.service.storage.config.StorageConfig
-//import com.icerockdev.service.storage.dto.ObjectDto
 //import com.icerockdev.service.storage.s3.IS3Storage
 //import io.ktor.application.ApplicationCall
+//import io.ktor.http.content.PartData
+//import io.ktor.http.content.forEachPart
+//import io.ktor.http.content.streamProvider
 //import io.ktor.request.receiveMultipart
 //
-//class FileUploader(private val IS3Storage: IS3Storage, private val bucket: String, private val config: StorageConfig) {
+//class FileUploader(private val storage: IS3Storage, private val bucket: String, private val config: StorageConfig) {
 //
 //    suspend fun uploadImageMultipart(call: ApplicationCall, partName: String) {
 //        uploadImagesMultipart(call, listOf(partName))
@@ -32,15 +34,15 @@
 //    suspend fun uploadMultipart(call: ApplicationCall, partNames: List<String>): List<ObjectDto> {
 //        val multipart = call.receiveMultipart()
 //        val objectDtoList: MutableList<ObjectDto> = mutableListOf()
-////        multipart.forEachPart { part ->
-////            if (part is PartData.FileItem && part.name in partNames) {
-////                part.streamProvider().use { stream ->
-////                    val objectDto = storage.put(bucket, part.originalFileName ?: "", stream)
-////                    objectDtoList.add(objectDto)
-////                }
-////            }
-////            part.dispose()
-////        }
+//        multipart.forEachPart { part ->
+//            if (part is PartData.FileItem && part.name in partNames) {
+//                part.streamProvider().use { stream ->
+//                    val objectDto = storage.put(bucket, part.originalFileName ?: "", stream)
+//                    objectDtoList.add(objectDto)
+//                }
+//            }
+//            part.dispose()
+//        }
 //
 //        return objectDtoList
 //    }

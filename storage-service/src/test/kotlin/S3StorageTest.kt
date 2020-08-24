@@ -4,6 +4,7 @@
 
 import com.icerockdev.service.storage.s3.S3StorageImpl
 import com.icerockdev.service.storage.s3.IS3Storage
+import com.icerockdev.service.storage.s3.minioConfBuilder
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -11,7 +12,6 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
-import software.amazon.awssdk.services.s3.S3Configuration
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
@@ -28,7 +28,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 
-class StorageTest {
+class S3StorageTest {
 
     private val bucketName = "test"
     private val objectPath = "/home/alexsh/2.jpg"
@@ -37,7 +37,7 @@ class StorageTest {
     fun init() {
         // TODO: load credentials from env
         s3 = S3Client.builder()
-            .serviceConfiguration(confBuilder)
+            .serviceConfiguration(minioConfBuilder)
             .credentialsProvider(
                 StaticCredentialsProvider.create(
                     AwsBasicCredentials.create(
@@ -55,7 +55,7 @@ class StorageTest {
     @Test
     fun testBucket() {
         assertFalse {
-            storage.isBucketExist(bucketName)
+            storage.bucketExist(bucketName)
         }
 
         assertFalse {
@@ -67,7 +67,7 @@ class StorageTest {
         }
 
         assertTrue {
-            storage.isBucketExist(bucketName)
+            storage.bucketExist(bucketName)
         }
 
         assertTrue {
@@ -78,7 +78,7 @@ class StorageTest {
     @Test
     fun testPutExistCopyDelete() {
         // init storage
-        if (!storage.isBucketExist(bucketName)) {
+        if (!storage.bucketExist(bucketName)) {
             storage.createBucket(bucketName)
         }
 
@@ -87,7 +87,7 @@ class StorageTest {
 
         // check wrong cases
         assertFalse {
-            storage.isObjectExists(bucketName, fileName)
+            storage.objectExists(bucketName, fileName)
         }
 
         assertTrue {
@@ -106,7 +106,7 @@ class StorageTest {
 
         // check success cases
         assertTrue {
-            storage.isObjectExists(bucketName, fileName)
+            storage.objectExists(bucketName, fileName)
         }
 
         // copy testing
@@ -121,7 +121,7 @@ class StorageTest {
             storage.copy(bucketName, fileName, copyBucket, copyFileName)
         }
 
-        if (!storage.isBucketExist(copyBucket)) {
+        if (!storage.bucketExist(copyBucket)) {
             storage.createBucket(copyBucket)
         }
 
@@ -158,7 +158,7 @@ class StorageTest {
         }
 
         assertFalse {
-            storage.isObjectExists(bucketName, fileName)
+            storage.objectExists(bucketName, fileName)
         }
 
         assertTrue {
@@ -169,7 +169,7 @@ class StorageTest {
     @Test
     fun testGetListDeleteAll() {
         // init storage
-        if (!storage.isBucketExist(bucketName)) {
+        if (!storage.bucketExist(bucketName)) {
             storage.createBucket(bucketName)
         }
 
@@ -234,13 +234,6 @@ class StorageTest {
 
     companion object {
         private val region = Region.US_WEST_2
-
-        private val confBuilder =
-            S3Configuration
-                .builder()
-                .pathStyleAccessEnabled(true)
-                .checksumValidationEnabled(false)
-                .build()
 
         private lateinit var s3: S3Client
         private lateinit var storage: IS3Storage

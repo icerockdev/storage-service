@@ -2,7 +2,7 @@
  * Copyright 2020 IceRock MAG Inc. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package com.icerockdev.service.storage.storage
+package com.icerockdev.service.storage.s3
 
 import org.slf4j.LoggerFactory
 import software.amazon.awssdk.core.sync.RequestBody
@@ -27,7 +27,7 @@ import java.io.InputStream
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
-class S3Storage(private val client: S3Client) : Storage {
+class S3StorageImpl(private val client: S3Client) : IS3Storage {
     override fun get(bucket: String, key: String): InputStream? {
         return try {
             client.getObject(GetObjectRequest.builder()
@@ -160,6 +160,6 @@ class S3Storage(private val client: S3Client) : Storage {
     }
 
     companion object {
-        private val logger = LoggerFactory.getLogger(S3Storage::class.java)
+        private val logger = LoggerFactory.getLogger(S3StorageImpl::class.java)
     }
 }

@@ -2,14 +2,14 @@
  * Copyright 2020 IceRock MAG Inc. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package com.icerockdev.service.storage.storage
+package com.icerockdev.service.storage.s3
 
 import software.amazon.awssdk.services.s3.model.S3Object
 import java.io.InputStream
 import java.util.UUID
 
 // TODO: change return type for support file storage (if needed)
-interface Storage {
+interface IS3Storage {
     fun get(bucket: String, key: String): InputStream?
 
     fun list(bucket: String, prefix: String): List<S3Object>

@@ -2,8 +2,8 @@
  * Copyright 2020 IceRock MAG Inc. Use of this source code is governed by the Apache 2.0 license.
  */
 
-import com.icerockdev.service.storage.storage.S3Storage
-import com.icerockdev.service.storage.storage.Storage
+import com.icerockdev.service.storage.s3.S3StorageImpl
+import com.icerockdev.service.storage.s3.IS3Storage
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -49,7 +49,7 @@ class StorageTest {
             .region(region)
             .build()
 
-        storage = S3Storage(s3)
+        storage = S3StorageImpl(s3)
     }
 
     @Test
@@ -243,6 +243,6 @@ class StorageTest {
                 .build()
 
         private lateinit var s3: S3Client
-        private lateinit var storage: Storage
+        private lateinit var storage: IS3Storage
     }
 }

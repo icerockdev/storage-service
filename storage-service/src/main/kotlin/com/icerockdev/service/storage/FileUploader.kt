@@ -35,15 +35,15 @@ class FileUploader(private val storage: Storage, private val bucket: String, pri
     suspend fun uploadMultipart(call: ApplicationCall, partNames: List<String>): List<ObjectDto> {
         val multipart = call.receiveMultipart()
         val objectDtoList: MutableList<ObjectDto> = mutableListOf()
-        multipart.forEachPart { part ->
-            if (part is PartData.FileItem && part.name in partNames) {
-                part.streamProvider().use { stream ->
-                    val objectDto = storage.put(bucket, part.originalFileName ?: "", stream)
-                    objectDtoList.add(objectDto)
-                }
-            }
-            part.dispose()
-        }
+//        multipart.forEachPart { part ->
+//            if (part is PartData.FileItem && part.name in partNames) {
+//                part.streamProvider().use { stream ->
+//                    val objectDto = storage.put(bucket, part.originalFileName ?: "", stream)
+//                    objectDtoList.add(objectDto)
+//                }
+//            }
+//            part.dispose()
+//        }
 
         return objectDtoList
     }

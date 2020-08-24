@@ -24,14 +24,10 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${properties["kotlin_version"]}")
     // AWS S3 SDK
     api("software.amazon.awssdk:s3:${properties["aws_sdk_s3_version"]}")
-    // Ktor
-    api("io.ktor:ktor-server-core:${properties["ktor_version"]}")
     // Logging
     implementation("ch.qos.logback:logback-classic:${properties["logback_version"]}")
-    // Imagick
-    implementation("jmagick:jmagick:${properties["jmagick_version"]}")
-    // Date/Time
-    implementation("joda-time:joda-time:${properties["jodatime_version"]}")
+
+    implementation("com.sksamuel.scrimage:scrimage-core:${properties["scrimage_version"]}")
     // Tests
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:${properties["kotlin_version"]}")
 }

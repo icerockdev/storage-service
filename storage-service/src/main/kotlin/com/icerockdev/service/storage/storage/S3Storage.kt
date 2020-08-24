@@ -7,6 +7,8 @@ package com.icerockdev.service.storage.storage
 import org.slf4j.LoggerFactory
 import software.amazon.awssdk.core.sync.RequestBody
 import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.model.BucketAlreadyExistsException
+import software.amazon.awssdk.services.s3.model.BucketAlreadyOwnedByYouException
 import software.amazon.awssdk.services.s3.model.CopyObjectRequest
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest
 import software.amazon.awssdk.services.s3.model.DeleteBucketRequest
@@ -61,22 +63,21 @@ class S3Storage(private val client: S3Client) : Storage {
     }
 
     override fun createBucket(bucket: String): Boolean {
-        try {
+        return try {
             client.createBucket(
                 CreateBucketRequest
                     .builder()
                     .bucket(bucket)
-//                .createBucketConfiguration(
-//                    CreateBucketConfiguration.builder()
-//                        .locationConstraint(region.id())
-//                        .build()
-//                )
                     .build()
             )
-            return true
+            true
+        } catch (e: BucketAlreadyExistsException) {
+            false
+        } catch (e: BucketAlreadyOwnedByYouException) {
+            false
         } catch (e: S3Exception) {
             logger.error(e.localizedMessage, e)
-            return false
+            false
         }
     }
 
@@ -84,8 +85,7 @@ class S3Storage(private val client: S3Client) : Storage {
         return try {
             client.deleteBucket(DeleteBucketRequest.builder().bucket(bucket).build())
             true
-        } catch (e: S3Exception) {
-            logger.error(e.localizedMessage, e)
+        } catch (e: NoSuchBucketException) {
             false
         }
     }
@@ -105,8 +105,7 @@ class S3Storage(private val client: S3Client) : Storage {
                 .build()
             )
             true
-        } catch (e: S3Exception) {
-            logger.error(e.localizedMessage, e)
+        } catch (e: NoSuchKeyException) {
             false
         }
     }
@@ -136,11 +135,11 @@ class S3Storage(private val client: S3Client) : Storage {
                 .destinationKey(dstKey)
                 .build()
 
-            val response = client.copyObject(request)
-            println(response.copyObjectResult())
+            client.copyObject(request)
             true
-        } catch (e: S3Exception) {
-            logger.error(e.localizedMessage, e)
+        } catch (e: NoSuchBucketException) {
+            false
+        } catch (e: NoSuchKeyException) {
             false
         }
     }

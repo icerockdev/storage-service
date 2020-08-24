@@ -20,7 +20,9 @@ import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.channels.Channels
 import java.nio.channels.ReadableByteChannel
+import kotlin.math.min
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -33,7 +35,6 @@ class StorageTest {
 
     @Before
     fun init() {
-        println("Before!")
         // TODO: load credentials from env
         s3 = S3Client.builder()
             .serviceConfiguration(confBuilder)
@@ -141,6 +142,16 @@ class StorageTest {
             storage.deleteBucket(copyBucket)
         }
 
+        // check delete full bucket
+        assertFails {
+            // non empty bucket
+            storage.deleteBucket(bucketName)
+        }
+
+        assertFalse {
+            storage.deleteBucket("another bucket")
+        }
+
         // check correct delete
         assertTrue {
             storage.delete(bucketName, fileName)
@@ -211,7 +222,7 @@ class StorageTest {
                 if (n1 == -1 || n2 == -1) return n1 == n2
                 buf1.flip()
                 buf2.flip()
-                for (i in 0 until Math.min(n1, n2)) if (buf1.get() !== buf2.get()) return false
+                for (i in 0 until min(n1, n2)) if (buf1.get() !== buf2.get()) return false
                 buf1.compact()
                 buf2.compact()
             }

@@ -8,7 +8,6 @@ import com.icerockdev.service.storage.config.AttachmentConfig
 import com.icerockdev.service.storage.config.ImageConfig
 import com.icerockdev.service.storage.config.PreviewConfig
 import com.icerockdev.service.storage.config.StorageConfig
-import com.icerockdev.service.storage.storage.MinIOStorage
 import io.github.cdimascio.dotenv.dotenv
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
@@ -22,7 +21,6 @@ import io.ktor.routing.post
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import io.minio.MinioClient
 import java.net.URI
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
@@ -42,15 +40,15 @@ object Main {
         AttachmentConfig("com/icerockdev/service/storage/storage/attachment")
     private val config: StorageConfig = StorageConfig(imageConfig, previewConfig, attachmentConfig)
 
-    // Setup client
-    private val minIOClient: MinioClient = MinioClient.builder()
-        .endpoint(dotenv["S3_ENDPOINT"])
-        .credentials(dotenv["MINIO_ACCESS_KEY"], dotenv["MINIO_SECRET_KEY"])
-        .region(dotenv["S3_REGION"])
-        .build()
-
-    // Setup storage
-    private val minIOStorage: MinIOStorage = MinIOStorage(minIOClient = minIOClient, bucket = dotenv["S3_BUCKET"] ?: "")
+//    // Setup client
+//    private val minIOClient: MinioClient = MinioClient.builder()
+//        .endpoint(dotenv["S3_ENDPOINT"])
+//        .credentials(dotenv["MINIO_ACCESS_KEY"], dotenv["MINIO_SECRET_KEY"])
+//        .region(dotenv["S3_REGION"])
+//        .build()
+//
+//    // Setup storage
+//    private val minIOStorage: MinIOStorage = MinIOStorage(minIOClient = minIOClient, bucket = dotenv["S3_BUCKET"] ?: "")
 
     // Setup S3 client
     private val s3Client = S3AsyncClient.builder()
@@ -86,14 +84,14 @@ object Main {
     }
 
     private suspend fun upload(call: ApplicationCall) {
-        val multipart = call.receiveMultipart()
-        multipart.forEachPart { part ->
-            if (part is PartData.FileItem) {
-                part.streamProvider().use { stream ->
-                    minIOStorage.put(part.originalFileName ?: "", stream)
-                }
-            }
-            part.dispose()
-        }
+//        val multipart = call.receiveMultipart()
+//        multipart.forEachPart { part ->
+//            if (part is PartData.FileItem) {
+//                part.streamProvider().use { stream ->
+//                    minIOStorage.put(part.originalFileName ?: "", stream)
+//                }
+//            }
+//            part.dispose()
+//        }
     }
 }

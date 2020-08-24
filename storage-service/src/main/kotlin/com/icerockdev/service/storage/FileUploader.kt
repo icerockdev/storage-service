@@ -13,7 +13,7 @@ import io.ktor.http.content.forEachPart
 import io.ktor.http.content.streamProvider
 import io.ktor.request.receiveMultipart
 
-class FileUploader(private val storage: Storage, private val config: StorageConfig) {
+class FileUploader(private val storage: Storage, private val bucket: String, private val config: StorageConfig) {
 
     suspend fun uploadImageMultipart(call: ApplicationCall, partName: String) {
         uploadImagesMultipart(call, listOf(partName))
@@ -38,7 +38,7 @@ class FileUploader(private val storage: Storage, private val config: StorageConf
         multipart.forEachPart { part ->
             if (part is PartData.FileItem && part.name in partNames) {
                 part.streamProvider().use { stream ->
-                    val objectDto = storage.put(part.originalFileName ?: "", stream)
+                    val objectDto = storage.put(bucket, part.originalFileName ?: "", stream)
                     objectDtoList.add(objectDto)
                 }
             }

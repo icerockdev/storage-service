@@ -104,6 +104,8 @@ class S3StorageTest {
             storage.put(bucketName, fileName, stream) // store empty file (no input reset)
         }
 
+        stream.close()
+
         // check success cases
         assertTrue {
             storage.objectExists(bucketName, fileName)
@@ -180,10 +182,11 @@ class S3StorageTest {
         var stream = FileInputStream(file)
 
         storage.put(bucketName, fileName1, stream)
+        stream.close()
 
         stream = FileInputStream(file)
         storage.put(bucketName, fileName2, stream)
-        stream = FileInputStream(file)
+        stream.close()
 
         val list = storage.list(bucketName, "")
         assertEquals(2, list.size)
@@ -194,9 +197,11 @@ class S3StorageTest {
         val loadFile = storage.get(bucketName, fileName1)
         assertNotNull(loadFile)
 
+        stream = FileInputStream(file)
         assertTrue {
             isEqual(loadFile, stream)
         }
+        stream.close()
 
         // drop all from bucket
         assertTrue {

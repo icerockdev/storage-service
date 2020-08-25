@@ -26,6 +26,8 @@ dependencies {
     api("software.amazon.awssdk:s3:${properties["aws_sdk_s3_version"]}")
     // Logging
     implementation("ch.qos.logback:logback-classic:${properties["logback_version"]}")
+    // coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${properties["coroutines_version"]}")
 
     implementation("com.sksamuel.scrimage:scrimage-core:${properties["scrimage_version"]}")
     // Tests

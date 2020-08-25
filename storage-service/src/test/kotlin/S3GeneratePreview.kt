@@ -2,10 +2,14 @@
  * Copyright 2020 IceRock MAG Inc. Use of this source code is governed by the Apache 2.0 license.
  */
 
-import com.icerockdev.service.storage.preview.generateAndStorePreview
+import com.icerockdev.service.storage.preview.AbstractPreview
+import com.icerockdev.service.storage.preview.JpegPreviewImpl
+import com.icerockdev.service.storage.preview.PngPreviewImpl
+import com.icerockdev.service.storage.preview.PreviewService
 import com.icerockdev.service.storage.s3.S3StorageImpl
 import com.icerockdev.service.storage.s3.IS3Storage
 import com.icerockdev.service.storage.s3.minioConfBuilder
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -15,17 +19,7 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
 import java.io.File
 import java.io.FileInputStream
-import java.io.IOException
-import java.io.InputStream
 import java.net.URI
-import java.nio.ByteBuffer
-import java.nio.channels.Channels
-import java.nio.channels.ReadableByteChannel
-import kotlin.math.min
-import kotlin.test.assertEquals
-import kotlin.test.assertFails
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 
@@ -51,6 +45,19 @@ class S3GeneratePreview {
             .build()
 
         storage = S3StorageImpl(s3)
+
+        previewConfig = mapOf(
+            "jpg" to JpegPreviewImpl(150, 150, 90, true).apply {
+                prefix = "150x150/test_jpg"
+            },
+            "png" to PngPreviewImpl(150, 150, 9).apply {
+                prefix = "150x150/test_png"
+            },
+        )
+
+        previewService = PreviewService(storage = storage, srcBucket = bucketName, previewConfig = previewConfig.values) {
+            previewPrefix = "preview"
+        }
     }
 
     @Test
@@ -61,17 +68,20 @@ class S3GeneratePreview {
         }
 
         val fileName = storage.generateFileKey()
-        val previewName = "preview/$fileName"
 
         val file = File(objectPath)
         val stream = FileInputStream(file)
 
         storage.put(bucketName, fileName, stream)
 
-        storage.generateAndStorePreview(bucketName, fileName, bucketName, previewName)
+        runBlocking {
+            previewService.generatePreview(fileName)
+        }
 
-        assertTrue {
-            storage.objectExists(bucketName, previewName)
+        for (preview in previewConfig.values) {
+            assertTrue {
+                storage.objectExists(previewService.getPreviewBucket(), previewService.getPreviewName(fileName, preview))
+            }
         }
 
         storage.deleteBucketWithObjects(bucketName)
@@ -87,5 +97,7 @@ class S3GeneratePreview {
 
         private lateinit var s3: S3Client
         private lateinit var storage: IS3Storage
+        private lateinit var previewService: PreviewService
+        private lateinit var previewConfig: Map<String, AbstractPreview>
     }
 }

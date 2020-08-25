@@ -41,6 +41,11 @@ class S3StorageImpl(private val client: S3Client) : IS3Storage {
         }
     }
 
+    override fun getBytes(bucket: String, key: String): ByteArray? {
+        val stream = get(bucket, key) ?: return null
+        return stream.use { it.readBytes() }
+    }
+
     override fun list(bucket: String, prefix: String): List<S3Object> {
         return try {
             client.listObjectsV2(ListObjectsV2Request.builder()
@@ -112,7 +117,7 @@ class S3StorageImpl(private val client: S3Client) : IS3Storage {
     }
 
     override fun put(bucket: String, key: String, stream: InputStream): Boolean {
-        return put(bucket, key, RequestBody.fromBytes(stream.readAllBytes()))
+        return put(bucket, key, RequestBody.fromBytes(stream.readBytes()))
     }
 
     override fun put(bucket: String, key: String, byteArray: ByteArray): Boolean {

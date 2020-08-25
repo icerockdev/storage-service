@@ -4,7 +4,4 @@
 
 package com.icerockdev.service.storage.preview
 
-interface IPreviewConfig {
-    val width: Int
-    val height: Int
-}
+class PreviewException(override val message: String?): Exception(message)

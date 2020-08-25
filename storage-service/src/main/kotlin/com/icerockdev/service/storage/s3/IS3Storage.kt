@@ -14,6 +14,8 @@ import java.util.UUID
 interface IS3Storage {
     fun get(bucket: String, key: String): FilterInputStream?
 
+    fun getBytes(bucket: String, key: String): ByteArray?
+
     fun list(bucket: String, prefix: String): List<S3Object>
 
     fun bucketExist(bucket: String): Boolean

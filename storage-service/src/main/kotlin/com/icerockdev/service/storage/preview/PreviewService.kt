@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory
 class PreviewService(
     private val storage: IS3Storage,
     private val srcBucket: String,
-    private val previewConfig: Collection<AbstractPreview>,
     private val dstBucket: String = srcBucket,
     configure: Configuration.() -> Unit = {}
 ) {
@@ -32,10 +31,9 @@ class PreviewService(
         configuration = Configuration().apply(configure)
     }
 
-    fun getPreviewBucket(): String {
-        return dstBucket
-    }
-
+    /**
+     * Generate preview name by basic key and preview config
+     */
     fun getPreviewName(srcKey: String, preview: AbstractPreview): String {
         return if (configuration.previewPrefix.isEmpty()) {
             "${preview.prefix}/$srcKey"
@@ -44,7 +42,14 @@ class PreviewService(
         }
     }
 
-    suspend fun generatePreview(srcKey: String): Boolean {
+    /**
+     * Generate preview for basic key by selected preview list
+     */
+    suspend fun generatePreview(
+        srcKey: String,
+        previewConfig: Collection<AbstractPreview>,
+        processing: AbstractPreview.(imageBytes: ByteArray) -> ByteArray = { imageBytes -> bound(imageBytes) }
+    ): Boolean {
         if (previewConfig.isEmpty()) {
             return true
         }
@@ -58,10 +63,35 @@ class PreviewService(
                 .buffer(configuration.operationParallel)
                 .flowOn(Dispatchers.IO)
                 .collect {
-                    val preview = it.bound(imageBytes)
+                    val preview = it.processing(imageBytes)
                     val dstKey = getPreviewName(srcKey, it)
 
                     storage.put(dstBucket, dstKey, preview)
+                }
+
+        } catch (e: Exception) {
+            logger.error(e.localizedMessage, e)
+            return false
+        }
+
+        return true
+    }
+
+    /**
+     * Delete preview for basic key by selected preview list
+     */
+    suspend fun deletePreview(srcKey: String, previewConfig: Collection<AbstractPreview>): Boolean {
+        if (previewConfig.isEmpty()) {
+            return true
+        }
+
+        try {
+            previewConfig.asFlow()
+                .buffer(configuration.operationParallel)
+                .flowOn(Dispatchers.IO)
+                .collect {
+                    val dstKey = getPreviewName(srcKey, it)
+                    storage.delete(dstBucket, dstKey)
                 }
 
         } catch (e: Exception) {

@@ -2,12 +2,12 @@
  * Copyright 2020 IceRock MAG Inc. Use of this source code is governed by the Apache 2.0 license.
  */
 
-import com.icerockdev.service.storage.preview.AbstractPreview
 import com.icerockdev.service.storage.preview.JpegPreviewImpl
 import com.icerockdev.service.storage.preview.PngPreviewImpl
+import com.icerockdev.service.storage.preview.PreviewConfig
 import com.icerockdev.service.storage.preview.PreviewService
-import com.icerockdev.service.storage.s3.S3StorageImpl
 import com.icerockdev.service.storage.s3.IS3Storage
+import com.icerockdev.service.storage.s3.S3StorageImpl
 import com.icerockdev.service.storage.s3.minioConfBuilder
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -20,6 +20,7 @@ import software.amazon.awssdk.services.s3.S3Client
 import java.io.File
 import java.io.FileInputStream
 import java.net.URI
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 
@@ -46,16 +47,16 @@ class S3GeneratePreview {
 
         storage = S3StorageImpl(s3)
 
-        previewConfig = mapOf(
-            "jpg" to JpegPreviewImpl(150, 150, 90, true).apply {
+        previewConfig = PreviewConfig().apply {
+            append("jpg", JpegPreviewImpl(150, 150, 90, true).apply {
                 prefix = "150x150/test_jpg"
-            },
-            "png" to PngPreviewImpl(150, 150, 9).apply {
+            })
+            append("png", PngPreviewImpl(150, 150, 9).apply {
                 prefix = "150x150/test_png"
-            },
-        )
+            })
+        }
 
-        previewService = PreviewService(storage = storage, srcBucket = bucketName, previewConfig = previewConfig.values) {
+        previewService = PreviewService(storage = storage, srcBucket = bucketName) {
             previewPrefix = "preview"
         }
     }
@@ -75,12 +76,22 @@ class S3GeneratePreview {
         storage.put(bucketName, fileName, stream)
 
         runBlocking {
-            previewService.generatePreview(fileName)
+            previewService.generatePreview(fileName, previewConfig.getPreviewList())
         }
 
-        for (preview in previewConfig.values) {
+        for (preview in previewConfig.getPreviewList()) {
             assertTrue {
-                storage.objectExists(previewService.getPreviewBucket(), previewService.getPreviewName(fileName, preview))
+                storage.objectExists(bucketName, previewService.getPreviewName(fileName, preview))
+            }
+        }
+
+        runBlocking {
+            previewService.deletePreview(fileName, previewConfig.getPreviewList())
+        }
+
+        for (preview in previewConfig.getPreviewList()) {
+            assertFalse {
+                storage.objectExists(bucketName, previewService.getPreviewName(fileName, preview))
             }
         }
 
@@ -98,6 +109,6 @@ class S3GeneratePreview {
         private lateinit var s3: S3Client
         private lateinit var storage: IS3Storage
         private lateinit var previewService: PreviewService
-        private lateinit var previewConfig: Map<String, AbstractPreview>
+        private lateinit var previewConfig: PreviewConfig
     }
 }

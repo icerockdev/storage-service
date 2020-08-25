@@ -4,10 +4,6 @@
 
 package com.icerockdev.sample
 
-import com.icerockdev.service.storage.config.AttachmentConfig
-import com.icerockdev.service.storage.config.ImageConfig
-import com.icerockdev.service.storage.config.PreviewConfig
-import com.icerockdev.service.storage.config.StorageConfig
 import com.icerockdev.service.storage.s3.S3StorageImpl
 import com.icerockdev.service.storage.s3.minioConfBuilder
 import io.github.cdimascio.dotenv.dotenv
@@ -25,25 +21,16 @@ import io.ktor.routing.post
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import java.net.URI
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
-import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.S3Client
-import software.amazon.awssdk.services.s3.S3Configuration
+import java.net.URI
 
 object Main {
     private val dotenv = dotenv {
         directory = "./sample"
     }
-
-    // Setup config
-//    private val imageConfig: ImageConfig = ImageConfig("com/icerockdev/service/storage/storage/img")
-//    private val previewConfig: PreviewConfig = PreviewConfig("com/icerockdev/service/storage/storage/preview")
-//    private val attachmentConfig: AttachmentConfig =
-//        AttachmentConfig("com/icerockdev/service/storage/storage/attachment")
-//    private val config: StorageConfig = StorageConfig(imageConfig, previewConfig, attachmentConfig)
 
     private val s3 = S3Client.builder()
         .serviceConfiguration(minioConfBuilder)
@@ -66,23 +53,6 @@ object Main {
             storage.createBucket(s3Bucket)
         }
     }
-
-    // Setup S3 client
-    private val s3Client = S3AsyncClient.builder()
-        .region(Region.of(dotenv["S3_REGION"]))
-        .endpointOverride(URI.create(dotenv["S3_ENDPOINT"] ?: ""))
-        .serviceConfiguration(
-            S3Configuration.builder()
-                .pathStyleAccessEnabled(true)
-                .checksumValidationEnabled(false)
-                .build()
-        )
-        .credentialsProvider(
-            StaticCredentialsProvider.create(
-                AwsBasicCredentials.create(dotenv["MINIO_ACCESS_KEY"], dotenv["MINIO_SECRET_KEY"])
-            )
-        )
-
 
     @JvmStatic
     fun main(args: Array<String>) {

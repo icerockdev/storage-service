@@ -28,6 +28,9 @@ import java.io.InputStream
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
+/**
+ * TODO: implements S3AsyncClient and change to coroutine usage
+ */
 class S3StorageImpl(private val client: S3Client) : IS3Storage {
     override fun get(bucket: String, key: String): FilterInputStream? {
         return try {
@@ -124,7 +127,6 @@ class S3StorageImpl(private val client: S3Client) : IS3Storage {
         return put(bucket, key, RequestBody.fromBytes(byteArray))
     }
 
-    // TODO: append any signature for put
     private fun put(bucket: String, key: String, body: RequestBody): Boolean {
         val request = PutObjectRequest.builder()
             .bucket(bucket)

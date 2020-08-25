@@ -16,10 +16,6 @@ class PngPreviewImpl(
 ) : AbstractPreview(width, height) {
 
     init {
-        if (width === null && height === null) {
-            throw PreviewException("Invalid configuration of size")
-        }
-
         if (compression > 9 || compression < 0) {
             throw PreviewException("Invalid configuration of compression")
         }

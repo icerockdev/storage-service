@@ -27,7 +27,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 
-class S3GeneratePreview {
+class S3GeneratePreviewTest {
 
     private val bucketName = "test"
     private val objectPath = "/home/alexsh/2.jpg"

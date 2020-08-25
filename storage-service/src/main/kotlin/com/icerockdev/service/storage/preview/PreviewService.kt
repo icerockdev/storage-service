@@ -76,11 +76,6 @@ class PreviewService(
 
         return true
     }
-//
-//    private fun boundImage(): AbstractPreview.(imageBytes: ByteArray) -> ByteArray {
-//        imageBytes ->
-//        loadImage(imageBytes).bound(getWidthOrMax(), getHeightOrMax()).bytes(getWriter())
-//    }
 
     /**
      * Delete preview for basic key by selected preview list

@@ -48,7 +48,7 @@ class PreviewService(
     suspend fun generatePreview(
         srcKey: String,
         previewConfig: Collection<AbstractPreview>,
-        processing: AbstractPreview.(imageBytes: ByteArray) -> ByteArray = { imageBytes -> bound(imageBytes) }
+        processing: AbstractPreview.(imageBytes: ByteArray) -> ByteArray = AbstractPreview::boundImage
     ): Boolean {
         if (previewConfig.isEmpty()) {
             return true
@@ -76,6 +76,11 @@ class PreviewService(
 
         return true
     }
+//
+//    private fun boundImage(): AbstractPreview.(imageBytes: ByteArray) -> ByteArray {
+//        imageBytes ->
+//        loadImage(imageBytes).bound(getWidthOrMax(), getHeightOrMax()).bytes(getWriter())
+//    }
 
     /**
      * Delete preview for basic key by selected preview list

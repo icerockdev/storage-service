@@ -4,16 +4,14 @@
 
 package com.icerockdev.service.storage.preview
 
-import com.sksamuel.scrimage.ImmutableImage
 import com.sksamuel.scrimage.ScaleMethod
 import com.sksamuel.scrimage.nio.ImageWriter
 
-// TODO: implements more methods https://github.com/sksamuel/scrimage
 abstract class AbstractPreview(
-    private val width: Int?,
-    private val height: Int?
+    val width: Int?,
+    val height: Int?
 ) {
-    protected abstract val scaleMethod: ScaleMethod
+    abstract val scaleMethod: ScaleMethod
     var prefix = "${width ?: "n"}x${height ?: "n"}"
 
     init {
@@ -22,9 +20,13 @@ abstract class AbstractPreview(
         }
     }
 
-    fun bound(imageByteArray: ByteArray): ByteArray {
-        return ImmutableImage.loader().fromBytes(imageByteArray).bound(width ?: Int.MAX_VALUE, height ?: Int.MAX_VALUE, scaleMethod).bytes(getWriter())
+    fun getWidthOrMax(): Int {
+        return width ?: Int.MAX_VALUE
     }
 
-    protected abstract fun getWriter(): ImageWriter
+    fun getHeightOrMax(): Int {
+        return height ?: Int.MAX_VALUE
+    }
+
+    abstract fun getWriter(): ImageWriter
 }

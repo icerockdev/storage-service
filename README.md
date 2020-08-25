@@ -31,12 +31,12 @@ Lib include tools for:
         - delete preview
         - allow a configuration for storage and src/dst buckets
     - PreviewConfig for project previews configuration
-    - AbstractPreview and implementations for process images by rules and generate special names for storing 
+    - AbstractPreview and implementations for process images configuration and generate special names for storing 
     - samples on test 
 
 ## TODO
  - Support for local file system by interface
- - More preview processing tools
+ - More preview helpers (see https://github.com/sksamuel/scrimage)
  - Optimization for coroutines
  - Tools for sending resize task to queue
  - Other media tools (like video processing)

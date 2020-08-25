@@ -2,10 +2,13 @@
  * Copyright 2020 IceRock MAG Inc. Use of this source code is governed by the Apache 2.0 license.
  */
 
+import com.icerockdev.service.storage.preview.AbstractPreview
 import com.icerockdev.service.storage.preview.JpegPreviewImpl
 import com.icerockdev.service.storage.preview.PngPreviewImpl
 import com.icerockdev.service.storage.preview.PreviewConfig
 import com.icerockdev.service.storage.preview.PreviewService
+import com.icerockdev.service.storage.preview.boundImage
+import com.icerockdev.service.storage.preview.loadImage
 import com.icerockdev.service.storage.s3.IS3Storage
 import com.icerockdev.service.storage.s3.S3StorageImpl
 import com.icerockdev.service.storage.s3.minioConfBuilder
@@ -76,7 +79,7 @@ class S3GeneratePreview {
         storage.put(bucketName, fileName, stream)
 
         runBlocking {
-            previewService.generatePreview(fileName, previewConfig.getPreviewList())
+            previewService.generatePreview(fileName, previewConfig.getPreviewList(), AbstractPreview::boundImage)
         }
 
         for (preview in previewConfig.getPreviewList()) {

@@ -22,28 +22,26 @@ val sourcesJar by tasks.registering(Jar::class) {
 dependencies {
     // Kotlin
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${properties["kotlin_version"]}")
-    // min.IO
-    api("io.minio:minio:${properties["minio_version"]}")
-    // Ktor
-    api("io.ktor:ktor-server-core:${properties["ktor_version"]}")
+    // AWS S3 SDK
+    api("software.amazon.awssdk:s3:${properties["aws_sdk_s3_version"]}")
     // Logging
     implementation("ch.qos.logback:logback-classic:${properties["logback_version"]}")
-    // Imagick
-    implementation("jmagick:jmagick:${properties["jmagick_version"]}")
-    // Date/Time
-    implementation("joda-time:joda-time:${properties["jodatime_version"]}")
+    // coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${properties["coroutines_version"]}")
+
+    implementation("com.sksamuel.scrimage:scrimage-core:${properties["scrimage_version"]}")
     // Tests
-    testImplementation("junit:junit:${properties["junit_version"]}")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:${properties["kotlin_version"]}")
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = JavaVersion.VERSION_11.toString()
     }
 }
 

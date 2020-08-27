@@ -20,6 +20,7 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
+import java.awt.Color
 import java.io.File
 import java.io.FileInputStream
 import java.net.URI
@@ -53,9 +54,11 @@ class S3GeneratePreviewTest {
         previewConfig = PreviewConfig().apply {
             append("jpg", JpegPreviewImpl(150, 150, 90, true).apply {
                 prefix = "150x150/test_jpg"
+                imageProcessor = { imageBytes -> loadImage(imageBytes).pad(50, Color.GREEN).bytes(getWriter()) }
             })
             append("png", PngPreviewImpl(150, 150, 9).apply {
                 prefix = "150x150/test_png"
+                imageProcessor = AbstractPreview::boundImage
             })
         }
 
@@ -79,7 +82,7 @@ class S3GeneratePreviewTest {
         storage.put(bucketName, fileName, stream)
 
         runBlocking {
-            previewService.generatePreview(fileName, previewConfig.getPreviewList(), AbstractPreview::boundImage)
+            previewService.generatePreview(fileName, previewConfig.getPreviewList())
         }
 
         for (preview in previewConfig.getPreviewList()) {

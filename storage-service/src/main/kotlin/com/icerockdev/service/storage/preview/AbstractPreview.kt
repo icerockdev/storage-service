@@ -13,6 +13,7 @@ abstract class AbstractPreview(
 ) {
     abstract val scaleMethod: ScaleMethod
     var prefix = "${width ?: "n"}x${height ?: "n"}"
+    var imageProcessor: AbstractPreview.(imageBytes: ByteArray) -> ByteArray = AbstractPreview::boundImage
 
     init {
         if (width === null && height === null) {

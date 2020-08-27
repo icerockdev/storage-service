@@ -47,8 +47,7 @@ class PreviewService(
      */
     suspend fun generatePreview(
         srcKey: String,
-        previewConfig: Collection<AbstractPreview>,
-        processing: AbstractPreview.(imageBytes: ByteArray) -> ByteArray = AbstractPreview::boundImage
+        previewConfig: Collection<AbstractPreview>
     ): Boolean {
         if (previewConfig.isEmpty()) {
             return true
@@ -63,7 +62,7 @@ class PreviewService(
                 .buffer(configuration.operationParallel)
                 .flowOn(Dispatchers.IO)
                 .collect {
-                    val preview = it.processing(imageBytes)
+                    val preview = it.imageProcessor(it, imageBytes)
                     val dstKey = getPreviewName(srcKey, it)
 
                     storage.put(dstBucket, dstKey, preview)

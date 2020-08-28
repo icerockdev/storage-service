@@ -4,9 +4,9 @@ Cache-Control: no-cache
 Content-Type: multipart/form-data; boundary=boundary
 
 --boundary
-Content-Disposition: form-data; name="file"; filename="2020-08-20_22-12.png";
+Content-Disposition: form-data; name="file"; filename="100.png";
 
-< ./src/main/resources/2020-08-20_22-12.png
+< ./storage-service/src/test/resources/100.png
 
 --boundary--
 ###

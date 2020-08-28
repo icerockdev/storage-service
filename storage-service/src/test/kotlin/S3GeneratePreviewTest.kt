@@ -12,6 +12,7 @@ import com.icerockdev.service.storage.preview.loadImage
 import com.icerockdev.service.storage.s3.IS3Storage
 import com.icerockdev.service.storage.s3.S3StorageImpl
 import com.icerockdev.service.storage.s3.minioConfBuilder
+import io.github.cdimascio.dotenv.dotenv
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -27,26 +28,26 @@ import java.net.URI
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-
 class S3GeneratePreviewTest {
-
-    private val bucketName = "test"
-    private val objectPath = "/home/alexsh/2.jpg"
+    private val dotenv = dotenv {
+        directory = "../"
+    }
+    private val bucketName = dotenv["S3_BUCKET"]!!
+    private val classLoader = javaClass.classLoader
 
     @Before
     fun init() {
-        // TODO: load credentials from env
         s3 = S3Client.builder()
             .serviceConfiguration(minioConfBuilder)
             .credentialsProvider(
                 StaticCredentialsProvider.create(
                     AwsBasicCredentials.create(
-                        "my_access_key", "my_secret_key"
+                        dotenv["MINIO_ACCESS_KEY"], dotenv["MINIO_SECRET_KEY"]
                     )
                 )
             )
-            .endpointOverride(URI.create("http://127.0.0.30:9000"))
-            .region(region)
+            .endpointOverride(URI.create(dotenv["S3_ENDPOINT"]!!))
+            .region(Region.of(dotenv["S3_REGION"]))
             .build()
 
         storage = S3StorageImpl(s3)
@@ -76,8 +77,9 @@ class S3GeneratePreviewTest {
 
         val fileName = storage.generateFileKey()
 
-        val file = File(objectPath)
-        val stream = FileInputStream(file)
+        val file = classLoader.getResource(dotenv["JPG_TEST_OBJECT"])?.file
+            ?: throw Exception("JPG File not found")
+        var stream = FileInputStream(file)
 
         storage.put(bucketName, fileName, stream)
 
@@ -110,8 +112,6 @@ class S3GeneratePreviewTest {
     }
 
     companion object {
-        private val region = Region.US_WEST_2
-
         private lateinit var s3: S3Client
         private lateinit var storage: IS3Storage
         private lateinit var previewService: PreviewService

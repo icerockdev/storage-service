@@ -26,12 +26,14 @@ dependencies {
     api("software.amazon.awssdk:s3:${properties["aws_sdk_s3_version"]}")
     // Logging
     implementation("ch.qos.logback:logback-classic:${properties["logback_version"]}")
-    // coroutines
+    // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${properties["coroutines_version"]}")
-
+    // Image processing
     implementation("com.sksamuel.scrimage:scrimage-core:${properties["scrimage_version"]}")
     // Tests
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:${properties["kotlin_version"]}")
+    // Load configuration in tests
+    testImplementation("io.github.cdimascio:java-dotenv:${properties["java_dotenv_version"]}")
 }
 
 java {

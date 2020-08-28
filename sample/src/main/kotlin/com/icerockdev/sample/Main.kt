@@ -28,10 +28,7 @@ import software.amazon.awssdk.services.s3.S3Client
 import java.net.URI
 
 object Main {
-    private val dotenv = dotenv {
-        directory = "./sample"
-    }
-
+    private val dotenv = dotenv()
     private val s3 = S3Client.builder()
         .serviceConfiguration(minioConfBuilder)
         .credentialsProvider(
@@ -46,11 +43,11 @@ object Main {
         .build()
 
     private val storage = S3StorageImpl(s3)
-    private val s3Bucket: String = dotenv["S3_BUCKET"]!!
+    private val bucketName: String = dotenv["S3_BUCKET"]!!
 
     init {
-        if (!storage.bucketExist(s3Bucket)) {
-            storage.createBucket(s3Bucket)
+        if (!storage.bucketExist(bucketName)) {
+            storage.createBucket(bucketName)
         }
     }
 
@@ -81,7 +78,7 @@ object Main {
         multipart.forEachPart { part ->
             if (part is PartData.FileItem) {
                 part.streamProvider().use { stream ->
-                    storage.put(s3Bucket, part.originalFileName ?: "", stream)
+                    storage.put(bucketName, part.originalFileName ?: "", stream)
                 }
             }
             part.dispose()

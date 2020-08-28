@@ -14,6 +14,7 @@ import software.amazon.awssdk.services.s3.model.CreateBucketRequest
 import software.amazon.awssdk.services.s3.model.DeleteBucketRequest
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
+import software.amazon.awssdk.services.s3.model.GetUrlRequest
 import software.amazon.awssdk.services.s3.model.HeadBucketRequest
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request
@@ -23,8 +24,13 @@ import software.amazon.awssdk.services.s3.model.ObjectCannedACL
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.services.s3.model.S3Exception
 import software.amazon.awssdk.services.s3.model.S3Object
+import java.io.BufferedInputStream
+import java.io.ByteArrayInputStream
 import java.io.FilterInputStream
 import java.io.InputStream
+import java.net.MalformedURLException
+import java.net.URI
+import java.net.URLConnection
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -47,6 +53,19 @@ class S3StorageImpl(private val client: S3Client) : IS3Storage {
     override fun getBytes(bucket: String, key: String): ByteArray? {
         val stream = get(bucket, key) ?: return null
         return stream.use { it.readBytes() }
+    }
+
+    override fun share(endpoint: URI, bucket: String, key: String): String? {
+        return try {
+            client.utilities().getUrl(GetUrlRequest.builder()
+                    .endpoint(endpoint)
+                    .bucket(bucket)
+                    .key(key)
+                    .build()
+            ).toExternalForm()
+        } catch (e: MalformedURLException) {
+            null
+        }
     }
 
     override fun list(bucket: String, prefix: String): List<S3Object> {
@@ -120,22 +139,28 @@ class S3StorageImpl(private val client: S3Client) : IS3Storage {
     }
 
     override fun put(bucket: String, key: String, stream: InputStream): Boolean {
-        return put(bucket, key, RequestBody.fromBytes(stream.readBytes()))
+        val bufferedInputStream = BufferedInputStream(stream)
+        return put(bucket, key, bufferedInputStream)
     }
 
     override fun put(bucket: String, key: String, byteArray: ByteArray): Boolean {
-        return put(bucket, key, RequestBody.fromBytes(byteArray))
+        val bufferedInputStream = BufferedInputStream(ByteArrayInputStream(byteArray))
+        return put(bucket, key, bufferedInputStream)
     }
 
-    private fun put(bucket: String, key: String, body: RequestBody): Boolean {
+    private fun put(bucket: String, key: String, bufferedInputStream: BufferedInputStream): Boolean {
+        val contentType = URLConnection.guessContentTypeFromStream(bufferedInputStream)
+
         val request = PutObjectRequest.builder()
             .bucket(bucket)
             .key(key)
             .acl(ObjectCannedACL.PUBLIC_READ)
+            .contentEncoding("UTF-8")
+            .contentType(contentType)
             .build()
 
         return try {
-            client.putObject(request, body)
+            client.putObject(request, RequestBody.fromBytes(bufferedInputStream.readBytes()))
             true
         } catch (e: S3Exception) {
             false

@@ -139,32 +139,27 @@ class S3StorageImpl(private val client: S3Client) : IS3Storage {
     }
 
     override fun put(bucket: String, key: String, stream: InputStream): Boolean {
-        val bufferedInputStream = BufferedInputStream(stream)
-        return put(bucket, key, bufferedInputStream)
+        val contentType = URLConnection.guessContentTypeFromStream(stream)
+
+        val request = PutObjectRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .acl(ObjectCannedACL.PUBLIC_READ)
+                .contentEncoding("UTF-8")
+                .contentType(contentType)
+                .build()
+
+        return try {
+            client.putObject(request, RequestBody.fromBytes(stream.readBytes()))
+            true
+        } catch (e: S3Exception) {
+            false
+        }
     }
 
     override fun put(bucket: String, key: String, byteArray: ByteArray): Boolean {
         val bufferedInputStream = BufferedInputStream(ByteArrayInputStream(byteArray))
         return put(bucket, key, bufferedInputStream)
-    }
-
-    private fun put(bucket: String, key: String, bufferedInputStream: BufferedInputStream): Boolean {
-        val contentType = URLConnection.guessContentTypeFromStream(bufferedInputStream)
-
-        val request = PutObjectRequest.builder()
-            .bucket(bucket)
-            .key(key)
-            .acl(ObjectCannedACL.PUBLIC_READ)
-            .contentEncoding("UTF-8")
-            .contentType(contentType)
-            .build()
-
-        return try {
-            client.putObject(request, RequestBody.fromBytes(bufferedInputStream.readBytes()))
-            true
-        } catch (e: S3Exception) {
-            false
-        }
     }
 
     override fun copy(srcBucket: String, srcKey: String, dstBucket: String, dstKey: String): Boolean {

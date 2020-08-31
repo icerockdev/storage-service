@@ -6,13 +6,6 @@ import com.icerockdev.service.storage.s3.IS3Storage
 import com.icerockdev.service.storage.s3.S3StorageImpl
 import com.icerockdev.service.storage.s3.minioConfBuilder
 import io.github.cdimascio.dotenv.dotenv
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
-import software.amazon.awssdk.regions.Region
-import software.amazon.awssdk.services.s3.S3Client
 import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStream
@@ -27,8 +20,13 @@ import kotlin.test.assertFails
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import software.amazon.awssdk.core.ResponseInputStream
-import software.amazon.awssdk.services.s3.model.GetObjectResponse
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.s3.S3Client
 
 class S3StorageTest {
     private val dotenv = dotenv {
@@ -223,6 +221,41 @@ class S3StorageTest {
 
         assertTrue {
             storage.deleteBucket(bucketName)
+        }
+    }
+
+    @Test
+    fun testShare() {
+        // init storage
+        if (!storage.bucketExist(bucketName)) {
+            storage.createBucket(bucketName)
+        }
+
+        val fileName = storage.generateFileKey()
+        val stream = classLoader.getResourceAsStream(dotenv["JPG_TEST_OBJECT"])
+            ?: throw Exception("JPG File not found")
+
+        // check wrong cases
+        assertFalse {
+            storage.objectExists(bucketName, fileName)
+        }
+
+        // set obj
+        assertTrue {
+            storage.put(bucketName, fileName, stream)
+        }
+
+        assertEquals(
+            storage.share(URI.create(dotenv["S3_ENDPOINT"]!!), bucketName, fileName),
+            "http://127.0.0.30:9000/${bucketName}/${fileName}"
+        )
+
+        assertTrue {
+            storage.delete(bucketName, fileName)
+        }
+
+        assertFalse {
+            storage.deleteBucket("another bucket")
         }
     }
 

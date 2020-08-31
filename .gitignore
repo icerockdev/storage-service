@@ -1,5 +1,4 @@
 build
 /.gradle
 /.idea
-sample/data
-sample/postgresql-data
+/data

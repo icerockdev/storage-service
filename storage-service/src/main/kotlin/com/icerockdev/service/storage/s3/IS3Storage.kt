@@ -8,6 +8,8 @@ import software.amazon.awssdk.services.s3.S3Configuration
 import software.amazon.awssdk.services.s3.model.S3Object
 import java.io.FilterInputStream
 import java.io.InputStream
+import java.net.URI
+import java.time.Duration
 import java.util.UUID
 
 // TODO: change return type for support file storage (if needed)
@@ -15,6 +17,10 @@ interface IS3Storage {
     fun get(bucket: String, key: String): FilterInputStream?
 
     fun getBytes(bucket: String, key: String): ByteArray?
+
+    fun getUrl(endpoint: URI, bucket: String, key: String): String?
+
+    fun share(bucket: String, key: String, duration: Duration): String?
 
     fun list(bucket: String, prefix: String): List<S3Object>
 

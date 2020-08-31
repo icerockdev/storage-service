@@ -26,12 +26,10 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
 import java.net.URI
+import software.amazon.awssdk.services.s3.presigner.S3Presigner
 
 object Main {
-    private val dotenv = dotenv {
-        directory = "./sample"
-    }
-
+    private val dotenv = dotenv()
     private val s3 = S3Client.builder()
         .serviceConfiguration(minioConfBuilder)
         .credentialsProvider(
@@ -45,12 +43,25 @@ object Main {
         .region(Region.of(dotenv["S3_REGION"]))
         .build()
 
-    private val storage = S3StorageImpl(s3)
-    private val s3Bucket: String = dotenv["S3_BUCKET"]!!
+    private val preSigner = S3Presigner.builder()
+        .serviceConfiguration(minioConfBuilder)
+        .credentialsProvider(
+            StaticCredentialsProvider.create(
+                AwsBasicCredentials.create(
+                    dotenv["MINIO_ACCESS_KEY"], dotenv["MINIO_SECRET_KEY"]
+                )
+            )
+        )
+        .endpointOverride(URI.create(dotenv["S3_ENDPOINT"]!!))
+        .region(Region.of(dotenv["S3_REGION"]))
+        .build()
+
+    private val storage = S3StorageImpl(s3, preSigner)
+    private val bucketName: String = dotenv["S3_BUCKET"]!!
 
     init {
-        if (!storage.bucketExist(s3Bucket)) {
-            storage.createBucket(s3Bucket)
+        if (!storage.bucketExist(bucketName)) {
+            storage.createBucket(bucketName)
         }
     }
 
@@ -81,7 +92,7 @@ object Main {
         multipart.forEachPart { part ->
             if (part is PartData.FileItem) {
                 part.streamProvider().use { stream ->
-                    storage.put(s3Bucket, part.originalFileName ?: "", stream)
+                    storage.put(bucketName, part.originalFileName ?: "", stream)
                 }
             }
             part.dispose()

@@ -12,6 +12,12 @@ import com.icerockdev.service.storage.preview.loadImage
 import com.icerockdev.service.storage.s3.IS3Storage
 import com.icerockdev.service.storage.s3.S3StorageImpl
 import com.icerockdev.service.storage.s3.minioConfBuilder
+import io.github.cdimascio.dotenv.dotenv
+import java.awt.Color
+import java.io.FileInputStream
+import java.net.URI
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -20,36 +26,44 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
-import java.awt.Color
-import java.io.File
-import java.io.FileInputStream
-import java.net.URI
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
-
+import software.amazon.awssdk.services.s3.presigner.S3Presigner
 
 class S3GeneratePreviewTest {
-
-    private val bucketName = "test"
-    private val objectPath = "/home/alexsh/2.jpg"
+    private val dotenv = dotenv {
+        directory = "../"
+    }
+    private val bucketName = dotenv["S3_BUCKET"]!!
+    private val classLoader = javaClass.classLoader
 
     @Before
     fun init() {
-        // TODO: load credentials from env
         s3 = S3Client.builder()
             .serviceConfiguration(minioConfBuilder)
             .credentialsProvider(
                 StaticCredentialsProvider.create(
                     AwsBasicCredentials.create(
-                        "my_access_key", "my_secret_key"
+                        dotenv["MINIO_ACCESS_KEY"], dotenv["MINIO_SECRET_KEY"]
                     )
                 )
             )
-            .endpointOverride(URI.create("http://127.0.0.30:9000"))
-            .region(region)
+            .endpointOverride(URI.create(dotenv["S3_ENDPOINT"]!!))
+            .region(Region.of(dotenv["S3_REGION"]))
             .build()
 
-        storage = S3StorageImpl(s3)
+        preSigner = S3Presigner.builder()
+            .serviceConfiguration(minioConfBuilder)
+            .credentialsProvider(
+                StaticCredentialsProvider.create(
+                    AwsBasicCredentials.create(
+                        dotenv["MINIO_ACCESS_KEY"], dotenv["MINIO_SECRET_KEY"]
+                    )
+                )
+            )
+            .endpointOverride(URI.create(dotenv["S3_ENDPOINT"]!!))
+            .region(Region.of(dotenv["S3_REGION"]))
+            .build()
+
+        storage = S3StorageImpl(s3, preSigner)
 
         previewConfig = PreviewConfig().apply {
             append("jpg", JpegPreviewImpl(150, 150, 90, true).apply {
@@ -76,8 +90,9 @@ class S3GeneratePreviewTest {
 
         val fileName = storage.generateFileKey()
 
-        val file = File(objectPath)
-        val stream = FileInputStream(file)
+        val file = classLoader.getResource(dotenv["JPG_TEST_OBJECT"])?.file
+            ?: throw Exception("JPG File not found")
+        var stream = FileInputStream(file)
 
         storage.put(bucketName, fileName, stream)
 
@@ -110,9 +125,8 @@ class S3GeneratePreviewTest {
     }
 
     companion object {
-        private val region = Region.US_WEST_2
-
         private lateinit var s3: S3Client
+        private lateinit var preSigner: S3Presigner
         private lateinit var storage: IS3Storage
         private lateinit var previewService: PreviewService
         private lateinit var previewConfig: PreviewConfig

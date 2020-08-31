@@ -16,6 +16,3 @@ services:
     volumes:
       - ./data:/data
     command: 'server /data'
-volumes:
-  minio-data:
-    driver: local

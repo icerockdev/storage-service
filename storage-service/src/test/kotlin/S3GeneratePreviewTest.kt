@@ -13,6 +13,11 @@ import com.icerockdev.service.storage.s3.IS3Storage
 import com.icerockdev.service.storage.s3.S3StorageImpl
 import com.icerockdev.service.storage.s3.minioConfBuilder
 import io.github.cdimascio.dotenv.dotenv
+import java.awt.Color
+import java.io.FileInputStream
+import java.net.URI
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -21,12 +26,7 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
-import java.awt.Color
-import java.io.File
-import java.io.FileInputStream
-import java.net.URI
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import software.amazon.awssdk.services.s3.presigner.S3Presigner
 
 class S3GeneratePreviewTest {
     private val dotenv = dotenv {
@@ -50,7 +50,20 @@ class S3GeneratePreviewTest {
             .region(Region.of(dotenv["S3_REGION"]))
             .build()
 
-        storage = S3StorageImpl(s3)
+        preSigner = S3Presigner.builder()
+            .serviceConfiguration(minioConfBuilder)
+            .credentialsProvider(
+                StaticCredentialsProvider.create(
+                    AwsBasicCredentials.create(
+                        dotenv["MINIO_ACCESS_KEY"], dotenv["MINIO_SECRET_KEY"]
+                    )
+                )
+            )
+            .endpointOverride(URI.create(dotenv["S3_ENDPOINT"]!!))
+            .region(Region.of(dotenv["S3_REGION"]))
+            .build()
+
+        storage = S3StorageImpl(s3, preSigner)
 
         previewConfig = PreviewConfig().apply {
             append("jpg", JpegPreviewImpl(150, 150, 90, true).apply {
@@ -113,6 +126,7 @@ class S3GeneratePreviewTest {
 
     companion object {
         private lateinit var s3: S3Client
+        private lateinit var preSigner: S3Presigner
         private lateinit var storage: IS3Storage
         private lateinit var previewService: PreviewService
         private lateinit var previewConfig: PreviewConfig

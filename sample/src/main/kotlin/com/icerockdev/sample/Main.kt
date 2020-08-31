@@ -26,6 +26,7 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
 import java.net.URI
+import software.amazon.awssdk.services.s3.presigner.S3Presigner
 
 object Main {
     private val dotenv = dotenv()
@@ -42,7 +43,20 @@ object Main {
         .region(Region.of(dotenv["S3_REGION"]))
         .build()
 
-    private val storage = S3StorageImpl(s3)
+    private val preSigner = S3Presigner.builder()
+        .serviceConfiguration(minioConfBuilder)
+        .credentialsProvider(
+            StaticCredentialsProvider.create(
+                AwsBasicCredentials.create(
+                    dotenv["MINIO_ACCESS_KEY"], dotenv["MINIO_SECRET_KEY"]
+                )
+            )
+        )
+        .endpointOverride(URI.create(dotenv["S3_ENDPOINT"]!!))
+        .region(Region.of(dotenv["S3_REGION"]))
+        .build()
+
+    private val storage = S3StorageImpl(s3, preSigner)
     private val bucketName: String = dotenv["S3_BUCKET"]!!
 
     init {

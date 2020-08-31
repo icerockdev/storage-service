@@ -11,15 +11,20 @@ import java.io.IOException
 import java.io.InputStream
 import java.net.URI
 import java.net.URLConnection
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 import java.nio.ByteBuffer
 import java.nio.channels.Channels
 import java.nio.channels.ReadableByteChannel
+import java.time.Duration
 import kotlin.math.min
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -27,6 +32,8 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.presigner.S3Presigner
+
 
 class S3StorageTest {
     private val dotenv = dotenv {
@@ -50,7 +57,20 @@ class S3StorageTest {
             .region(Region.of(dotenv["S3_REGION"]))
             .build()
 
-        storage = S3StorageImpl(s3)
+        preSigner = S3Presigner.builder()
+            .serviceConfiguration(minioConfBuilder)
+            .credentialsProvider(
+                StaticCredentialsProvider.create(
+                    AwsBasicCredentials.create(
+                        dotenv["MINIO_ACCESS_KEY"], dotenv["MINIO_SECRET_KEY"]
+                    )
+                )
+            )
+            .endpointOverride(URI.create(dotenv["S3_ENDPOINT"]!!))
+            .region(Region.of(dotenv["S3_REGION"]))
+            .build()
+
+        storage = S3StorageImpl(s3, preSigner)
     }
 
     @Test
@@ -224,9 +244,10 @@ class S3StorageTest {
         }
     }
 
+
     @Test
-    fun testShare() {
-        // init storage
+    fun testShareGetURL() {
+        // Init storage
         if (!storage.bucketExist(bucketName)) {
             storage.createBucket(bucketName)
         }
@@ -235,27 +256,53 @@ class S3StorageTest {
         val stream = classLoader.getResourceAsStream(dotenv["JPG_TEST_OBJECT"])
             ?: throw Exception("JPG File not found")
 
-        // check wrong cases
+        // Check wrong cases
         assertFalse {
             storage.objectExists(bucketName, fileName)
         }
 
-        // set obj
+        // Put object
         assertTrue {
             storage.put(bucketName, fileName, stream)
         }
 
         assertEquals(
-            storage.share(URI.create(dotenv["S3_ENDPOINT"]!!), bucketName, fileName),
+            storage.getUrl(URI.create(dotenv["S3_ENDPOINT"]!!), bucketName, fileName),
             "http://127.0.0.30:9000/${bucketName}/${fileName}"
         )
+
+        runBlocking {
+            val url = storage.share(bucketName, fileName, Duration.ofSeconds(2L))
+
+            // Test sharing
+            val httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .build()
+
+            val httpRequest: HttpRequest = HttpRequest.newBuilder()
+                .uri(URI.create(url!!))
+                .GET()
+                .build()
+
+            val successResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString())
+            val successHeaders = successResponse.headers()
+            assertEquals(successResponse.statusCode(), 200)
+            assertEquals(successHeaders.firstValue("content-type").get(), "image/jpeg")
+
+            Thread.sleep(2000)
+
+            val failResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString())
+            val failHeaders = failResponse.headers()
+            assertEquals(failResponse.statusCode(), 403)
+            assertEquals(failHeaders.firstValue("content-type").get(), "application/xml")
+        }
 
         assertTrue {
             storage.delete(bucketName, fileName)
         }
 
-        assertFalse {
-            storage.deleteBucket("another bucket")
+        assertTrue {
+            storage.deleteBucket(bucketName)
         }
     }
 
@@ -335,6 +382,7 @@ class S3StorageTest {
 
     companion object {
         private lateinit var s3: S3Client
+        private lateinit var preSigner: S3Presigner
         private lateinit var storage: IS3Storage
     }
 }

@@ -12,6 +12,7 @@ import java.net.URI
 import java.net.URLConnection
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.time.Duration
 import org.slf4j.LoggerFactory
 import software.amazon.awssdk.core.sync.RequestBody
 import software.amazon.awssdk.services.s3.S3Client
@@ -32,17 +33,21 @@ import software.amazon.awssdk.services.s3.model.ObjectCannedACL
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.services.s3.model.S3Exception
 import software.amazon.awssdk.services.s3.model.S3Object
+import software.amazon.awssdk.services.s3.presigner.S3Presigner
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest
 
 /**
  * TODO: implements S3AsyncClient and change to coroutine usage
  */
-class S3StorageImpl(private val client: S3Client) : IS3Storage {
+class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presigner) : IS3Storage {
+
     override fun get(bucket: String, key: String): FilterInputStream? {
         return try {
-            client.getObject(GetObjectRequest.builder()
-                .bucket(bucket)
-                .key(key)
-                .build()
+            client.getObject(
+                GetObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .build()
             )
         } catch (e: NoSuchKeyException) {
             null
@@ -54,9 +59,32 @@ class S3StorageImpl(private val client: S3Client) : IS3Storage {
         return stream.use { it.readBytes() }
     }
 
-    override fun share(endpoint: URI, bucket: String, key: String): String? {
+    /**
+     * Get pre-signed URL with TTL
+     */
+    override fun share(bucket: String, key: String, duration: Duration): String? {
         return try {
-            client.utilities().getUrl(GetUrlRequest.builder()
+            val getObjectRequest = GetObjectRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .build()
+            preSigner.presignGetObject(GetObjectPresignRequest.builder()
+                .signatureDuration(duration)
+                .getObjectRequest(getObjectRequest)
+                .build()
+            ).url().toExternalForm()
+        } catch (e: Throwable) {
+            null
+        }
+    }
+
+    /**
+     * Get permanent URL (public access bucket)
+     */
+    override fun getUrl(endpoint: URI, bucket: String, key: String): String? {
+        return try {
+            client.utilities().getUrl(
+                GetUrlRequest.builder()
                     .endpoint(endpoint)
                     .bucket(bucket)
                     .key(key)
@@ -69,10 +97,11 @@ class S3StorageImpl(private val client: S3Client) : IS3Storage {
 
     override fun list(bucket: String, prefix: String): List<S3Object> {
         return try {
-            client.listObjectsV2(ListObjectsV2Request.builder()
-                .bucket(bucket)
-                .prefix(prefix)
-                .build()
+            client.listObjectsV2(
+                ListObjectsV2Request.builder()
+                    .bucket(bucket)
+                    .prefix(prefix)
+                    .build()
             ).contents()
         } catch (e: S3Exception) {
             logger.error(e.localizedMessage, e)
@@ -126,10 +155,11 @@ class S3StorageImpl(private val client: S3Client) : IS3Storage {
 
     override fun objectExists(bucket: String, key: String): Boolean {
         return try {
-            client.headObject(HeadObjectRequest.builder()
-                .bucket(bucket)
-                .key(key)
-                .build()
+            client.headObject(
+                HeadObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .build()
             )
             true
         } catch (e: NoSuchKeyException) {

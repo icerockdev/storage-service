@@ -12,7 +12,7 @@ apply(plugin = "java")
 apply(plugin = "kotlin")
 
 group = "com.icerockdev"
-version = "0.3.0"
+version = "0.4.0"
 
 val sourcesJar by tasks.registering(Jar::class) {
     classifier = "sources"
@@ -29,7 +29,7 @@ dependencies {
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${properties["coroutines_version"]}")
     // Image processing
-    implementation("com.sksamuel.scrimage:scrimage-core:${properties["scrimage_version"]}")
+    api("com.sksamuel.scrimage:scrimage-core:${properties["scrimage_version"]}")
     // Tests
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:${properties["kotlin_version"]}")
     // Load configuration in tests

@@ -5,7 +5,6 @@
 package com.icerockdev.service.storage.preview
 
 import com.sksamuel.scrimage.ImmutableImage
-import com.sksamuel.scrimage.ScaleMethod
 
 /**
  * Load image from bytes, just helper
@@ -19,5 +18,5 @@ fun loadImage(imageByteArray: ByteArray): ImmutableImage {
  * TODO: make more helpers
  */
 fun AbstractPreview.boundImage(imageBytes: ByteArray): ByteArray {
-    return loadImage(imageBytes).bound(getWidthOrMax(), getHeightOrMax(), ScaleMethod.valueOf(scaleMethod.name)).bytes(getWriter())
+    return loadImage(imageBytes).bound(getWidthOrMax(), getHeightOrMax(), scaleMethod.getScale()).bytes(getWriter())
 }

@@ -4,7 +4,6 @@
 
 package com.icerockdev.service.storage.preview
 
-import com.sksamuel.scrimage.ScaleMethod
 import com.sksamuel.scrimage.nio.ImageWriter
 import com.sksamuel.scrimage.nio.PngWriter
 
@@ -12,7 +11,7 @@ class PngPreviewImpl(
     width: Int?,
     height: Int?,
     private val compression: Int = 9, // between 0 and 9, 9 - max compression
-    override val scaleMethod: ScaleMethod = ScaleMethod.Bicubic
+    override val scaleMethod: PreviewScaleMethod = PreviewScaleMethod.Bicubic
 ) : AbstractPreview(width, height) {
 
     init {

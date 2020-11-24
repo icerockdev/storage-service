@@ -29,7 +29,7 @@ dependencies {
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${properties["coroutines_version"]}")
     // Image processing
-    api("com.sksamuel.scrimage:scrimage-core:${properties["scrimage_version"]}")
+    implementation("com.sksamuel.scrimage:scrimage-core:${properties["scrimage_version"]}")
     // Tests
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:${properties["kotlin_version"]}")
     // Load configuration in tests

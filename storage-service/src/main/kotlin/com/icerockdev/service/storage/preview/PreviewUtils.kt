@@ -18,5 +18,5 @@ fun loadImage(imageByteArray: ByteArray): ImmutableImage {
  * TODO: make more helpers
  */
 fun AbstractPreview.boundImage(imageBytes: ByteArray): ByteArray {
-    return loadImage(imageBytes).bound(getWidthOrMax(), getHeightOrMax(), scaleMethod).bytes(getWriter())
+    return loadImage(imageBytes).bound(getWidthOrMax(), getHeightOrMax(), scaleMethod.getScale()).bytes(getWriter())
 }

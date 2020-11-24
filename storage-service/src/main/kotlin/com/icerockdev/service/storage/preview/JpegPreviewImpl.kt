@@ -4,7 +4,6 @@
 
 package com.icerockdev.service.storage.preview
 
-import com.sksamuel.scrimage.ScaleMethod
 import com.sksamuel.scrimage.nio.ImageWriter
 import com.sksamuel.scrimage.nio.JpegWriter
 
@@ -13,7 +12,7 @@ class JpegPreviewImpl(
     height: Int?,
     private val compression: Int = 80,
     private val progressive: Boolean = false,
-    override val scaleMethod: ScaleMethod = ScaleMethod.Bicubic
+    override val scaleMethod: PreviewScaleMethod = PreviewScaleMethod.Bicubic
 ) : AbstractPreview(width, height) {
 
     init {

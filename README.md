@@ -6,11 +6,11 @@
 ````kotlin
 // Append repository
 repositories {
-    maven { url = url("https://dl.bintray.com/icerockdev/backend") }
+   mavenCentral()
 }
 
 // Append dependency
-implementation("com.icerockdev:storage-service:0.5.0")
+implementation("com.icerockdev:storage-service:0.5.1")
 ````
 
 ## Library usage

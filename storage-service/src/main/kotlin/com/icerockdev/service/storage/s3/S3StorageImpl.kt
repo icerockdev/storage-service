@@ -229,6 +229,49 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
         }
     }
 
+    override fun getBucketPolicy(bucket: String): String {
+        return try {
+            client.getBucketPolicy(
+                GetBucketPolicyRequest.builder()
+                    .bucket(bucket)
+                    .build()
+            ).policy()
+        } catch (e: S3Exception) {
+            logger.error(e.localizedMessage, e)
+            ""
+        }
+    }
+
+    override fun putBucketPolicy(bucket: String, policy: String, confirmRemoveSelfBucketAccess: Boolean): Boolean {
+        return try {
+            val response = client.putBucketPolicy(
+                PutBucketPolicyRequest.builder()
+                    .bucket(bucket)
+                    .confirmRemoveSelfBucketAccess(confirmRemoveSelfBucketAccess)
+                    .policy(policy)
+                    .build()
+            )
+            response.sdkHttpResponse().isSuccessful
+        } catch (e: S3Exception) {
+            logger.error(e.localizedMessage, e)
+            false
+        }
+    }
+
+    override fun deleteBucketPolicy(bucket: String): Boolean {
+        return try {
+            val response = client.deleteBucketPolicy(
+                DeleteBucketPolicyRequest.builder()
+                    .bucket(bucket)
+                    .build()
+            )
+            response.sdkHttpResponse().isSuccessful
+        } catch (e: S3Exception) {
+            logger.error(e.localizedMessage, e)
+            false
+        }
+    }
+
     companion object {
         private val logger = LoggerFactory.getLogger(S3StorageImpl::class.java)
     }

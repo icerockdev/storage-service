@@ -48,6 +48,12 @@ interface IS3Storage {
     fun generateFileKey(): String {
         return UUID.randomUUID().toString().replace("-","/")
     }
+
+    fun getBucketPolicy(bucket: String): String
+
+    fun putBucketPolicy(bucket: String, policy: String, confirmRemoveSelfBucketAccess: Boolean): Boolean
+
+    fun deleteBucketPolicy(bucket: String): Boolean
 }
 
 val minioConfBuilder: S3Configuration =

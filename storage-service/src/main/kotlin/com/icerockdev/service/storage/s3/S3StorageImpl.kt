@@ -33,6 +33,9 @@ import software.amazon.awssdk.services.s3.model.ObjectCannedACL
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.services.s3.model.S3Exception
 import software.amazon.awssdk.services.s3.model.S3Object
+import software.amazon.awssdk.services.s3.model.GetBucketPolicyRequest
+import software.amazon.awssdk.services.s3.model.PutBucketPolicyRequest
+import software.amazon.awssdk.services.s3.model.DeleteBucketPolicyRequest
 import software.amazon.awssdk.services.s3.presigner.S3Presigner
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest
 

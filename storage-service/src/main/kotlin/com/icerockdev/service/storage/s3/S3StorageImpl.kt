@@ -4,6 +4,11 @@
 
 package com.icerockdev.service.storage.s3
 
+import com.icerockdev.service.storage.s3.policy.builder.PolicyBuilder
+import com.icerockdev.service.storage.s3.policy.builder.PrincipalBuilder
+import com.icerockdev.service.storage.s3.policy.builder.StatementBuilder
+import com.icerockdev.service.storage.s3.policy.dto.Principal
+import com.icerockdev.service.storage.s3.policy.dto.Statement
 import java.io.BufferedInputStream
 import java.io.FilterInputStream
 import java.io.InputStream
@@ -232,6 +237,10 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
         }
     }
 
+//    https://docs.min.io/minio/baremetal/security/IAM/iam-policies.html
+//    https://docs.min.io/minio/baremetal/reference/minio-cli/minio-mc-admin/mc-admin-policy.html#mc-admin-policy-set
+//    https://docs.min.io/minio/baremetal/reference/minio-cli/minio-mc-admin/mc-admin-policy.html#mc-admin-policy-info
+
     override fun getBucketPolicy(bucket: String): String {
         return try {
             client.getBucketPolicy(
@@ -246,6 +255,7 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
     }
 
     override fun putBucketPolicy(bucket: String, policy: String, confirmRemoveSelfBucketAccess: Boolean): Boolean {
+//        PutBucketPolicyResponse putBucketPolicy(PutBucketPolicyRequest putBucketPolicyRequest)
         return try {
             val response = client.putBucketPolicy(
                 PutBucketPolicyRequest.builder()
@@ -262,6 +272,7 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
     }
 
     override fun deleteBucketPolicy(bucket: String): Boolean {
+//        DeleteBucketPolicyResponse deleteBucketPolicy(DeleteBucketPolicyRequest deleteBucketPolicyRequest)
         return try {
             val response = client.deleteBucketPolicy(
                 DeleteBucketPolicyRequest.builder()
@@ -274,6 +285,15 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
             false
         }
     }
+
+    override fun policyBuilder(init: PolicyBuilder.() -> Unit): String =
+        PolicyBuilder().apply(init).build()
+
+    override fun statementBuilder(init: StatementBuilder.() -> Unit): Statement =
+        StatementBuilder().apply(init).build()
+
+    override fun principalBuilder(init: PrincipalBuilder.() -> Unit): Principal =
+        PrincipalBuilder().apply(init).build()
 
     companion object {
         private val logger = LoggerFactory.getLogger(S3StorageImpl::class.java)

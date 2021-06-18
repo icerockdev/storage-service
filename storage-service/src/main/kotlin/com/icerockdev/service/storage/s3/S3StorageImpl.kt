@@ -237,10 +237,6 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
         }
     }
 
-//    https://docs.min.io/minio/baremetal/security/IAM/iam-policies.html
-//    https://docs.min.io/minio/baremetal/reference/minio-cli/minio-mc-admin/mc-admin-policy.html#mc-admin-policy-set
-//    https://docs.min.io/minio/baremetal/reference/minio-cli/minio-mc-admin/mc-admin-policy.html#mc-admin-policy-info
-
     override fun getBucketPolicy(bucket: String): String? {
         return try {
             client.getBucketPolicy(
@@ -257,7 +253,6 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
     }
 
     override fun putBucketPolicy(bucket: String, policy: String, confirmRemoveSelfBucketAccess: Boolean): Boolean {
-//        PutBucketPolicyResponse putBucketPolicy(PutBucketPolicyRequest putBucketPolicyRequest)
         return try {
             val response = client.putBucketPolicy(
                 PutBucketPolicyRequest.builder()
@@ -274,7 +269,6 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
     }
 
     override fun deleteBucketPolicy(bucket: String): Boolean {
-//        DeleteBucketPolicyResponse deleteBucketPolicy(DeleteBucketPolicyRequest deleteBucketPolicyRequest)
         return try {
             val response = client.deleteBucketPolicy(
                 DeleteBucketPolicyRequest.builder()

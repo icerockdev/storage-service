@@ -241,7 +241,7 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
 //    https://docs.min.io/minio/baremetal/reference/minio-cli/minio-mc-admin/mc-admin-policy.html#mc-admin-policy-set
 //    https://docs.min.io/minio/baremetal/reference/minio-cli/minio-mc-admin/mc-admin-policy.html#mc-admin-policy-info
 
-    override fun getBucketPolicy(bucket: String): String {
+    override fun getBucketPolicy(bucket: String): String? {
         return try {
             client.getBucketPolicy(
                 GetBucketPolicyRequest.builder()
@@ -249,8 +249,10 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
                     .build()
             ).policy()
         } catch (e: S3Exception) {
-            logger.error(e.localizedMessage, e)
-            ""
+            if (e.statusCode() != 404) {
+                logger.error(e.localizedMessage, e)
+            }
+            null
         }
     }
 
@@ -286,13 +288,13 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
         }
     }
 
-    override fun policyBuilder(init: PolicyBuilder.() -> Unit): String =
+    override fun buildPolicy(init: PolicyBuilder.() -> Unit): String =
         PolicyBuilder().apply(init).build()
 
-    override fun statementBuilder(init: StatementBuilder.() -> Unit): Statement =
+    override fun buildStatement(init: StatementBuilder.() -> Unit): Statement =
         StatementBuilder().apply(init).build()
 
-    override fun principalBuilder(init: PrincipalBuilder.() -> Unit): Principal =
+    override fun buildPrincipal(init: PrincipalBuilder.() -> Unit): Principal =
         PrincipalBuilder().apply(init).build()
 
     companion object {

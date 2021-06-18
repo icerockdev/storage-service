@@ -5,6 +5,8 @@
 import com.icerockdev.service.storage.s3.IS3Storage
 import com.icerockdev.service.storage.s3.S3StorageImpl
 import com.icerockdev.service.storage.s3.minioConfBuilder
+import com.icerockdev.service.storage.s3.policy.dto.ActionEnum
+import com.icerockdev.service.storage.s3.policy.dto.EffectEnum
 import io.github.cdimascio.dotenv.dotenv
 import java.io.FileInputStream
 import java.io.IOException
@@ -24,6 +26,7 @@ import kotlin.test.assertFails
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.test.assertNull
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -190,7 +193,6 @@ class S3StorageTest {
         }
     }
 
-
     @Test
     fun testPutMimeType() {
         // init storage
@@ -243,7 +245,6 @@ class S3StorageTest {
             storage.deleteBucket(bucketName)
         }
     }
-
 
     @Test
     fun testShareGetURL() {
@@ -346,6 +347,41 @@ class S3StorageTest {
         assertTrue {
             storage.deleteBucketWithObjects(bucketName)
         }
+    }
+
+    @Test
+    fun testPolicy() {
+        if (!storage.bucketExist(bucketName)) {
+            storage.createBucket(bucketName)
+        }
+
+        val currentPolicy = storage.getBucketPolicy(bucketName)
+        assertNull(currentPolicy)
+
+        val newPolicy = storage.buildPolicy {
+            statement.add(
+                storage.buildStatement {
+                    effect = EffectEnum.Allow
+                    action = listOf(
+                        ActionEnum.DeleteObject.actionName,
+                        ActionEnum.GetObject.actionName,
+                        ActionEnum.PutObject.actionName
+                    )
+                    principal = storage.buildPrincipal {
+                        aws.add("*")
+                    }
+                    resource = listOf("arn:aws:s3:::test-bucket/*")
+                }
+            )
+        }
+        val result = storage.putBucketPolicy(bucketName, newPolicy)
+        assertTrue(result)
+
+        val deletePolicyResult = storage.deleteBucketPolicy(bucketName)
+        assertTrue(deletePolicyResult)
+
+        val policyAfterDelete = storage.getBucketPolicy(bucketName)
+        assertNull(policyAfterDelete)
     }
 
     @After

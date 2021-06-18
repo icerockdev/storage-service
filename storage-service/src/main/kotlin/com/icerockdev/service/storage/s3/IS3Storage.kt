@@ -54,17 +54,17 @@ interface IS3Storage {
         return UUID.randomUUID().toString().replace("-","/")
     }
 
-    fun getBucketPolicy(bucket: String): String
+    fun getBucketPolicy(bucket: String): String?
 
-    fun putBucketPolicy(bucket: String, policy: String, confirmRemoveSelfBucketAccess: Boolean): Boolean
+    fun putBucketPolicy(bucket: String, policy: String, confirmRemoveSelfBucketAccess: Boolean = false): Boolean
 
     fun deleteBucketPolicy(bucket: String): Boolean
 
-    fun policyBuilder(init: PolicyBuilder.() -> Unit): String
+    fun buildPolicy(init: PolicyBuilder.() -> Unit): String
 
-    fun statementBuilder(init: StatementBuilder.() -> Unit): Statement
+    fun buildStatement(init: StatementBuilder.() -> Unit): Statement
 
-    fun principalBuilder(init: PrincipalBuilder.() -> Unit): Principal
+    fun buildPrincipal(init: PrincipalBuilder.() -> Unit): Principal
 }
 
 val minioConfBuilder: S3Configuration =

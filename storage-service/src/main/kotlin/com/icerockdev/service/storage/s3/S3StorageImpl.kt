@@ -4,6 +4,11 @@
 
 package com.icerockdev.service.storage.s3
 
+import com.icerockdev.service.storage.s3.policy.builder.PolicyBuilder
+import com.icerockdev.service.storage.s3.policy.builder.PrincipalBuilder
+import com.icerockdev.service.storage.s3.policy.builder.StatementBuilder
+import com.icerockdev.service.storage.s3.policy.dto.Principal
+import com.icerockdev.service.storage.s3.policy.dto.Statement
 import java.io.BufferedInputStream
 import java.io.FilterInputStream
 import java.io.InputStream
@@ -33,6 +38,9 @@ import software.amazon.awssdk.services.s3.model.ObjectCannedACL
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.services.s3.model.S3Exception
 import software.amazon.awssdk.services.s3.model.S3Object
+import software.amazon.awssdk.services.s3.model.GetBucketPolicyRequest
+import software.amazon.awssdk.services.s3.model.PutBucketPolicyRequest
+import software.amazon.awssdk.services.s3.model.DeleteBucketPolicyRequest
 import software.amazon.awssdk.services.s3.presigner.S3Presigner
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest
 
@@ -228,6 +236,60 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
             false
         }
     }
+
+    override fun getBucketPolicy(bucket: String): String? {
+        return try {
+            client.getBucketPolicy(
+                GetBucketPolicyRequest.builder()
+                    .bucket(bucket)
+                    .build()
+            ).policy()
+        } catch (e: S3Exception) {
+            if (e.statusCode() != 404) {
+                logger.error(e.localizedMessage, e)
+            }
+            null
+        }
+    }
+
+    override fun putBucketPolicy(bucket: String, policy: String, confirmRemoveSelfBucketAccess: Boolean): Boolean {
+        return try {
+            val response = client.putBucketPolicy(
+                PutBucketPolicyRequest.builder()
+                    .bucket(bucket)
+                    .confirmRemoveSelfBucketAccess(confirmRemoveSelfBucketAccess)
+                    .policy(policy)
+                    .build()
+            )
+            response.sdkHttpResponse().isSuccessful
+        } catch (e: S3Exception) {
+            logger.error(e.localizedMessage, e)
+            false
+        }
+    }
+
+    override fun deleteBucketPolicy(bucket: String): Boolean {
+        return try {
+            val response = client.deleteBucketPolicy(
+                DeleteBucketPolicyRequest.builder()
+                    .bucket(bucket)
+                    .build()
+            )
+            response.sdkHttpResponse().isSuccessful
+        } catch (e: S3Exception) {
+            logger.error(e.localizedMessage, e)
+            false
+        }
+    }
+
+    override fun buildPolicy(init: PolicyBuilder.() -> Unit): String =
+        PolicyBuilder().apply(init).build()
+
+    override fun buildStatement(init: StatementBuilder.() -> Unit): Statement =
+        StatementBuilder().apply(init).build()
+
+    override fun buildPrincipal(init: PrincipalBuilder.() -> Unit): Principal =
+        PrincipalBuilder().apply(init).build()
 
     companion object {
         private val logger = LoggerFactory.getLogger(S3StorageImpl::class.java)

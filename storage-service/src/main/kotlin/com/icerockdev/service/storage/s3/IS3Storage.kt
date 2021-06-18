@@ -4,6 +4,11 @@
 
 package com.icerockdev.service.storage.s3
 
+import com.icerockdev.service.storage.s3.policy.builder.PolicyBuilder
+import com.icerockdev.service.storage.s3.policy.builder.PrincipalBuilder
+import com.icerockdev.service.storage.s3.policy.builder.StatementBuilder
+import com.icerockdev.service.storage.s3.policy.dto.Principal
+import com.icerockdev.service.storage.s3.policy.dto.Statement
 import software.amazon.awssdk.services.s3.S3Configuration
 import software.amazon.awssdk.services.s3.model.S3Object
 import java.io.FilterInputStream
@@ -48,6 +53,18 @@ interface IS3Storage {
     fun generateFileKey(): String {
         return UUID.randomUUID().toString().replace("-","/")
     }
+
+    fun getBucketPolicy(bucket: String): String?
+
+    fun putBucketPolicy(bucket: String, policy: String, confirmRemoveSelfBucketAccess: Boolean = false): Boolean
+
+    fun deleteBucketPolicy(bucket: String): Boolean
+
+    fun buildPolicy(init: PolicyBuilder.() -> Unit): String
+
+    fun buildStatement(init: StatementBuilder.() -> Unit): Statement
+
+    fun buildPrincipal(init: PrincipalBuilder.() -> Unit): Principal
 }
 
 val minioConfBuilder: S3Configuration =

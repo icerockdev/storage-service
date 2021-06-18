@@ -3,19 +3,22 @@ package com.icerockdev.service.storage.s3.policy.dto
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 data class Statement(
     @JsonProperty("Effect")
     val effect: EffectEnum,
     @JsonProperty("Principal")
-    var principal: Principal,
-//    NotPrincipal // AWS JSON policy elements
+    val principal: Principal?,
+    @JsonProperty("NotPrincipal")
+    val notPrincipal: Principal?,
     @JsonProperty("Action")
     val action: List<String>,
-//    NotAction  // IAM JSON policy elements
+    @JsonProperty("NotAction")
+    val notAction: List<String>,
     @JsonProperty("Resource")
     val resource: List<String>?,
-//    NotResource  // IAM JSON policy elements
+    @JsonProperty("NotResource")
+    val notResource: List<String>?,
     @JsonProperty("Condition")
     val condition: String?,
 )

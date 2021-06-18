@@ -362,20 +362,22 @@ class S3StorageTest {
             statement.add(
                 storage.buildStatement {
                     effect = EffectEnum.Allow
-                    action = listOf(
-                        ActionEnum.DeleteObject.actionName,
-                        ActionEnum.GetObject.actionName,
-                        ActionEnum.PutObject.actionName
-                    )
+
+                    action.add(ActionEnum.DeleteObject)
+                    action.add(ActionEnum.GetObject)
+                    action.add(ActionEnum.PutObject)
+
+                    resource.add("arn:aws:s3:::test-bucket/*")
+
                     principal = storage.buildPrincipal {
                         aws.add("*")
                     }
-                    resource = listOf("arn:aws:s3:::test-bucket/*")
                 }
             )
         }
-        val result = storage.putBucketPolicy(bucketName, newPolicy)
-        assertTrue(result)
+        println("Polict: $newPolicy")
+        val putPolicyResult = storage.putBucketPolicy(bucketName, newPolicy)
+        assertTrue(putPolicyResult)
 
         val deletePolicyResult = storage.deleteBucketPolicy(bucketName)
         assertTrue(deletePolicyResult)

@@ -15,7 +15,7 @@ apply(plugin = "java")
 apply(plugin = "kotlin")
 
 group = "com.icerockdev"
-version = "0.5.1"
+version = "0.5.2"
 
 val sourcesJar by tasks.registering(Jar::class) {
     archiveClassifier.set("sources")

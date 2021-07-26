@@ -103,9 +103,7 @@ class S3StorageTest {
             storage.createBucket(bucketName)
         }
 
-        val fileName = storage.generateFileKey()
-        val stream = classLoader.getResourceAsStream(dotenv["JPG_TEST_OBJECT"])
-            ?: throw Exception("JPG File not found")
+        val (fileName, stream) = getFile(FileType.JPG)
 
         // check wrong cases
         assertFalse {
@@ -198,15 +196,9 @@ class S3StorageTest {
             storage.createBucket(bucketName)
         }
 
-        val jpgFileName = storage.generateFileKey()
-        val pngFileName = storage.generateFileKey()
-        val gifFileName = storage.generateFileKey()
-        val jpgStream = classLoader.getResourceAsStream(dotenv["JPG_TEST_OBJECT"])
-            ?: throw Exception("JPG File not found")
-        val pngStream = classLoader.getResourceAsStream(dotenv["PNG_TEST_OBJECT"])
-            ?: throw Exception("PNG File not found")
-        val gifStream = classLoader.getResourceAsStream(dotenv["GIF_TEST_OBJECT"])
-            ?: throw Exception("GIF File not found")
+        val (jpgFileName, jpgStream) = getFile(FileType.JPG)
+        val (pngFileName, pngStream) = getFile(FileType.PNG)
+        val (gifFileName, gifStream) = getFile(FileType.GIF)
 
         // Check wrong cases
         assertFalse(storage.objectExists(bucketName, jpgFileName))
@@ -231,9 +223,9 @@ class S3StorageTest {
         val pngObject = storage.get(bucketName, pngFileName)
         val gifObject = storage.get(bucketName, gifFileName)
 
-        assertEquals(getContentType(jpgObject?.buffered()!!), "image/jpeg")
-        assertEquals(getContentType(pngObject?.buffered()!!), "image/png")
-        assertEquals(getContentType(gifObject?.buffered()!!), "image/gif")
+        assertEquals("image/jpeg", jpgObject?.response()?.contentType())
+        assertEquals("image/png", pngObject?.response()?.contentType())
+        assertEquals("image/gif", gifObject?.response()?.contentType())
 
         assertTrue(storage.delete(bucketName, jpgFileName))
         assertTrue(storage.delete(bucketName, pngFileName))
@@ -244,6 +236,78 @@ class S3StorageTest {
         }
     }
 
+    @Test
+    fun testFileSizeAndType() {
+        // init storage
+        if (!storage.bucketExist(bucketName)) {
+            storage.createBucket(bucketName)
+        }
+
+        val (jpgFileName, jpgStream) = getFile(FileType.JPG)
+        val jpgFileByteArray = jpgStream.readAllBytes()
+
+        jpgStream.close()
+
+        // Check wrong cases
+        assertFalse(storage.objectExists(bucketName, jpgFileName))
+
+        // Put object to storage
+        assertTrue(storage.put(bucketName, jpgFileName, jpgFileByteArray.inputStream()))
+
+        // Check object exist
+        assertTrue(storage.objectExists(bucketName, jpgFileName))
+
+        val jpgObject = storage.get(bucketName, jpgFileName)
+
+        assertEquals("image/jpeg", jpgObject?.response()?.contentType())
+
+        assertEquals(jpgFileByteArray.size.toLong(), jpgObject?.response()?.contentLength())
+
+        assertTrue {
+            storage.deleteBucketWithObjects(bucketName)
+        }
+    }
+
+    @Test
+    fun testMetadata() {
+        // init storage
+        if (!storage.bucketExist(bucketName)) {
+            storage.createBucket(bucketName)
+        }
+
+        val metadata = mapOf("attribute1" to "testValue1", "attribute2" to "testValue2")
+
+        val (jpgFileName, jpgStream) = getFile(FileType.JPG)
+
+        // Check wrong cases
+        assertFalse(storage.objectExists(bucketName, jpgFileName))
+
+        // Put object to storage
+        assertTrue(storage.put(bucketName, jpgFileName, jpgStream, metadata))
+        jpgStream.close()
+
+        // Check object exist
+        assertTrue(storage.objectExists(bucketName, jpgFileName))
+
+        val jpgObject = storage.get(bucketName, jpgFileName)
+
+        assertEquals(metadata, jpgObject?.response()?.metadata())
+
+        // copy testing
+        val copyFileName = storage.generateFileKey()
+        // copy to current bucket
+        assertTrue {
+            storage.copy(bucketName, jpgFileName, bucketName, copyFileName)
+        }
+
+        val copyObject = storage.get(bucketName, copyFileName)
+
+        assertEquals(metadata, copyObject?.response()?.metadata())
+
+        assertTrue {
+            storage.deleteBucketWithObjects(bucketName)
+        }
+    }
 
     @Test
     fun testShareGetURL() {
@@ -267,8 +331,8 @@ class S3StorageTest {
         }
 
         assertEquals(
-            storage.getUrl(URI.create(dotenv["S3_ENDPOINT"]!!), bucketName, fileName),
-            "http://127.0.0.30:9000/${bucketName}/${fileName}"
+            "${dotenv["S3_ENDPOINT"]}/${bucketName}/${fileName}",
+            storage.getUrl(URI.create(dotenv["S3_ENDPOINT"]!!), bucketName, fileName)
         )
 
         runBlocking {
@@ -286,15 +350,15 @@ class S3StorageTest {
 
             val successResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString())
             val successHeaders = successResponse.headers()
-            assertEquals(successResponse.statusCode(), 200)
-            assertEquals(successHeaders.firstValue("content-type").get(), "image/jpeg")
+            assertEquals(200, successResponse.statusCode())
+            assertEquals("image/jpeg", successHeaders.firstValue("content-type").get())
 
             Thread.sleep(2000)
 
             val failResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString())
             val failHeaders = failResponse.headers()
-            assertEquals(failResponse.statusCode(), 403)
-            assertEquals(failHeaders.firstValue("content-type").get(), "application/xml")
+            assertEquals(403, failResponse.statusCode())
+            assertEquals("application/xml", failHeaders.firstValue("content-type").get())
         }
 
         assertTrue {
@@ -351,6 +415,23 @@ class S3StorageTest {
     @After
     fun close() {
         s3.close()
+    }
+
+    private fun getFile(fileType: FileType): Pair<String, InputStream> {
+        val key = storage.generateFileKey()
+        val fileName = when (fileType) {
+            FileType.JPG -> dotenv["JPG_TEST_OBJECT"] ?: throw Exception("JPG File not found")
+            FileType.GIF -> dotenv["GIF_TEST_OBJECT"] ?: throw Exception("GIF File not found")
+            FileType.PNG -> dotenv["PNG_TEST_OBJECT"] ?: throw Exception("PNG File not found")
+        }
+
+        return key to (classLoader.getResourceAsStream(fileName) ?: throw Exception("File not readable"))
+    }
+
+    private enum class FileType {
+        JPG,
+        GIF,
+        PNG;
     }
 
     @Throws(IOException::class)

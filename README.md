@@ -10,13 +10,13 @@ repositories {
 }
 
 // Append dependency
-implementation("com.icerockdev:storage-service:0.5.1")
+implementation("com.icerockdev:storage-service:0.5.2")
 ````
 
 ## Library usage
 Lib include tools for:
  - s3 interface
-    - put object to bucket
+    - put object (supports metadata) to bucket
     - delete the object from bucket
     - list by prefix in bucket
     - create bucket

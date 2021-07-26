@@ -8,7 +8,6 @@ import software.amazon.awssdk.core.ResponseInputStream
 import software.amazon.awssdk.services.s3.S3Configuration
 import software.amazon.awssdk.services.s3.model.GetObjectResponse
 import software.amazon.awssdk.services.s3.model.S3Object
-import java.io.FilterInputStream
 import java.io.InputStream
 import java.net.URI
 import java.time.Duration

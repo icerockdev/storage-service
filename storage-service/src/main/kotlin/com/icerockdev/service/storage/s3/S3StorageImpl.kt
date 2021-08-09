@@ -24,9 +24,6 @@ import java.net.URLConnection
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.time.Duration
-import org.slf4j.LoggerFactory
-import software.amazon.awssdk.core.sync.RequestBody
-import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.BucketAlreadyExistsException
 import software.amazon.awssdk.services.s3.model.BucketAlreadyOwnedByYouException
 import software.amazon.awssdk.services.s3.model.CopyObjectRequest
@@ -47,8 +44,6 @@ import software.amazon.awssdk.services.s3.model.S3Object
 import software.amazon.awssdk.services.s3.model.GetBucketPolicyRequest
 import software.amazon.awssdk.services.s3.model.PutBucketPolicyRequest
 import software.amazon.awssdk.services.s3.model.DeleteBucketPolicyRequest
-import software.amazon.awssdk.services.s3.presigner.S3Presigner
-import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest
 
 /**
  * TODO: implements S3AsyncClient and change to coroutine usage

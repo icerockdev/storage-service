@@ -421,9 +421,6 @@ class S3StorageTest {
             storage.createBucket(bucketName)
         }
 
-        val currentPolicy = storage.getBucketPolicy(bucketName)
-        assertNull(currentPolicy)
-
         val putPolicyResult = storage.putBucketPolicy(bucketName, {
             statement.add(
                 storage.buildStatement {
@@ -443,19 +440,17 @@ class S3StorageTest {
         })
         assertTrue(putPolicyResult)
 
-        val deletePolicyResult = storage.deleteBucketPolicy(bucketName)
-        assertTrue(deletePolicyResult)
-
-        val policyAfterDelete = storage.getBucketPolicy(bucketName)
-        assertNull(policyAfterDelete)
+        val currentPolicy = storage.getBucketPolicy(bucketName)
+        assertNotNull(currentPolicy)
 
         val putBigPolicyResult = storage.putBucketPolicy(bucketName, {
             statement.add(
                 storage.buildStatement {
                     effect = EffectEnum.ALLOW
                     action.add(ActionEnum.GET_OBJECT)
-                    for (backetNum in 1..1000) {
-                        resource.add("arn:aws:s3:::test-bucket/$backetNum")
+                    resource.add("arn:aws:s3:::test-bucket/*")
+                    for (bucketNum in 1..1000) {
+                        resource.add("arn:aws:s3:::test-bucket/$bucketNum")
                     }
                     principal = storage.buildPrincipal {
                         aws.add(PrincipalEnum.PUBLIC_ACCESS.accessName)
@@ -464,6 +459,12 @@ class S3StorageTest {
             )
         })
         assertFalse(putBigPolicyResult)
+
+        val deletePolicyResult = storage.deleteBucketPolicy(bucketName)
+        assertTrue(deletePolicyResult)
+
+        val policyAfterDelete = storage.getBucketPolicy(bucketName)
+        assertNull(policyAfterDelete)
     }
 
     @After

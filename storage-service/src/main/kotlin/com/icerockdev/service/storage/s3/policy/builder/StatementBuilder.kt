@@ -17,6 +17,7 @@ class StatementBuilder {
     var condition: String? = null
 
     fun build(): Statement {
+        val effect = effect
         if (effect === null) {
             throw Exception("Effect must be filled")
         }
@@ -31,7 +32,7 @@ class StatementBuilder {
         }
 
         return Statement(
-            effect = effect!!.actionName,
+            effect = effect.actionName,
             action = action.map { it.actionName },
             notAction = notAction.map { it.actionName },
             principal = principal,

@@ -9,8 +9,14 @@ import com.icerockdev.service.storage.s3.policy.builder.PrincipalBuilder
 import com.icerockdev.service.storage.s3.policy.builder.StatementBuilder
 import com.icerockdev.service.storage.s3.policy.dto.Principal
 import com.icerockdev.service.storage.s3.policy.dto.Statement
+import org.slf4j.LoggerFactory
+import software.amazon.awssdk.core.ResponseInputStream
+import software.amazon.awssdk.core.sync.RequestBody
+import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.model.*
+import software.amazon.awssdk.services.s3.presigner.S3Presigner
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest
 import java.io.BufferedInputStream
-import java.io.FilterInputStream
 import java.io.InputStream
 import java.net.MalformedURLException
 import java.net.URI
@@ -49,7 +55,7 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
  */
 class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presigner) : IS3Storage {
 
-    override fun get(bucket: String, key: String): FilterInputStream? {
+    override fun get(bucket: String, key: String): ResponseInputStream<GetObjectResponse>? {
         return try {
             client.getObject(
                 GetObjectRequest.builder()
@@ -76,10 +82,11 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
                 .bucket(bucket)
                 .key(key)
                 .build()
-            preSigner.presignGetObject(GetObjectPresignRequest.builder()
-                .signatureDuration(duration)
-                .getObjectRequest(getObjectRequest)
-                .build()
+            preSigner.presignGetObject(
+                GetObjectPresignRequest.builder()
+                    .signatureDuration(duration)
+                    .getObjectRequest(getObjectRequest)
+                    .build()
             ).url().toExternalForm()
         } catch (e: Throwable) {
             null
@@ -175,16 +182,16 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
         }
     }
 
-    override fun put(bucket: String, key: String, stream: InputStream): Boolean {
-        return put(bucket, key, stream.buffered())
+    override fun put(bucket: String, key: String, stream: InputStream, metadata: Map<String, String>?): Boolean {
+        return put(bucket, key, stream.buffered(), metadata)
     }
 
-    override fun put(bucket: String, key: String, byteArray: ByteArray): Boolean {
+    override fun put(bucket: String, key: String, byteArray: ByteArray, metadata: Map<String, String>?): Boolean {
         val stream = byteArray.inputStream().buffered()
-        return put(bucket, key, stream)
+        return put(bucket, key, stream, metadata)
     }
 
-    private fun put(bucket: String, key: String, stream: BufferedInputStream): Boolean {
+    private fun put(bucket: String, key: String, stream: BufferedInputStream, metadata: Map<String, String>?): Boolean {
         val contentType = URLConnection.guessContentTypeFromStream(stream)
 
         val request = PutObjectRequest.builder()
@@ -193,6 +200,7 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
             .acl(ObjectCannedACL.PUBLIC_READ)
             .contentEncoding("UTF-8")
             .contentType(contentType)
+            .metadata(metadata ?: emptyMap())
             .build()
 
         return try {

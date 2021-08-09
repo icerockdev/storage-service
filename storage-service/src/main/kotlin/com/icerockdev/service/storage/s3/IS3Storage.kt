@@ -57,7 +57,7 @@ interface IS3Storage {
 
     fun getBucketPolicy(bucket: String): String?
 
-    fun putBucketPolicy(bucket: String, configure: PolicyBuilder.() -> Unit, confirmRemoveSelfBucketAccess: Boolean = false): Boolean
+    fun putBucketPolicy(bucket: String, confirmRemoveSelfBucketAccess: Boolean = false, configure: PolicyBuilder.() -> Unit): Boolean
 
     fun deleteBucketPolicy(bucket: String): Boolean
 

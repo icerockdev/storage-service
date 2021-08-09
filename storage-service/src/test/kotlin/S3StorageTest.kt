@@ -421,7 +421,7 @@ class S3StorageTest {
             storage.createBucket(bucketName)
         }
 
-        val putPolicyResult = storage.putBucketPolicy(bucketName, {
+        val putPolicyResult = storage.putBucketPolicy(bucketName) {
             statement.add(
                 storage.buildStatement {
                     effect = EffectEnum.ALLOW
@@ -437,13 +437,13 @@ class S3StorageTest {
                     }
                 }
             )
-        })
+        }
         assertTrue(putPolicyResult)
 
         val currentPolicy = storage.getBucketPolicy(bucketName)
         assertNotNull(currentPolicy)
 
-        val putBigPolicyResult = storage.putBucketPolicy(bucketName, {
+        val putBigPolicyResult = storage.putBucketPolicy(bucketName) {
             statement.add(
                 storage.buildStatement {
                     effect = EffectEnum.ALLOW
@@ -457,7 +457,7 @@ class S3StorageTest {
                     }
                 }
             )
-        })
+        }
         assertFalse(putBigPolicyResult)
 
         val deletePolicyResult = storage.deleteBucketPolicy(bucketName)

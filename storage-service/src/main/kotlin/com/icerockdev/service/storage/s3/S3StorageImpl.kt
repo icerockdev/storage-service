@@ -255,10 +255,13 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
         }
     }
 
-    override fun putBucketPolicy(bucket: String, configure: PolicyBuilder.() -> Unit, confirmRemoveSelfBucketAccess: Boolean): Boolean {
+    override fun putBucketPolicy(
+        bucket: String,
+        confirmRemoveSelfBucketAccess: Boolean,
+        configure: PolicyBuilder.() -> Unit
+    ): Boolean {
         return try {
             val p = PolicyBuilder().apply(configure).build()
-            println("Size: " + p.toByteArray().size)
             val response = client.putBucketPolicy(
                 PutBucketPolicyRequest.builder()
                     .bucket(bucket)

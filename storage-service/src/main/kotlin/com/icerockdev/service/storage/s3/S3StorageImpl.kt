@@ -252,17 +252,22 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
         }
     }
 
-    override fun putBucketPolicy(bucket: String, policy: String, confirmRemoveSelfBucketAccess: Boolean): Boolean {
+    override fun putBucketPolicy(bucket: String, configure: PolicyBuilder.() -> Unit, confirmRemoveSelfBucketAccess: Boolean): Boolean {
         return try {
+            val p = PolicyBuilder().apply(configure).build()
+            println("Size: " + p.toByteArray().size)
             val response = client.putBucketPolicy(
                 PutBucketPolicyRequest.builder()
                     .bucket(bucket)
                     .confirmRemoveSelfBucketAccess(confirmRemoveSelfBucketAccess)
-                    .policy(policy)
+                    .policy(PolicyBuilder().apply(configure).build())
                     .build()
             )
             response.sdkHttpResponse().isSuccessful
         } catch (e: S3Exception) {
+            logger.error(e.localizedMessage, e)
+            false
+        } catch (e: Exception) {
             logger.error(e.localizedMessage, e)
             false
         }
@@ -282,14 +287,11 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
         }
     }
 
-    override fun buildPolicy(init: PolicyBuilder.() -> Unit): String =
-        PolicyBuilder().apply(init).build()
+    override fun buildStatement(configure: StatementBuilder.() -> Unit): Statement =
+        StatementBuilder().apply(configure).build()
 
-    override fun buildStatement(init: StatementBuilder.() -> Unit): Statement =
-        StatementBuilder().apply(init).build()
-
-    override fun buildPrincipal(init: PrincipalBuilder.() -> Unit): Principal =
-        PrincipalBuilder().apply(init).build()
+    override fun buildPrincipal(configure: PrincipalBuilder.() -> Unit): Principal =
+        PrincipalBuilder().apply(configure).build()
 
     companion object {
         private val logger = LoggerFactory.getLogger(S3StorageImpl::class.java)

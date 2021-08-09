@@ -6,7 +6,7 @@ import com.icerockdev.service.storage.s3.policy.dto.Principal
 import com.icerockdev.service.storage.s3.policy.dto.Statement
 import java.lang.Exception
 
-class StatementBuilder() {
+class StatementBuilder {
     var effect: EffectEnum? = null
     var action: MutableList<ActionEnum> = mutableListOf()
     var notAction: MutableList<ActionEnum> = mutableListOf()
@@ -28,7 +28,7 @@ class StatementBuilder() {
         }
 
         return Statement(
-            effect = effect!!,
+            effect = effect!!.actionName,
             action = action.map { it.actionName },
             notAction = notAction.map { it.actionName },
             principal = principal,

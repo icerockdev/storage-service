@@ -56,15 +56,13 @@ interface IS3Storage {
 
     fun getBucketPolicy(bucket: String): String?
 
-    fun putBucketPolicy(bucket: String, policy: String, confirmRemoveSelfBucketAccess: Boolean = false): Boolean
+    fun putBucketPolicy(bucket: String, configure: PolicyBuilder.() -> Unit, confirmRemoveSelfBucketAccess: Boolean = false): Boolean
 
     fun deleteBucketPolicy(bucket: String): Boolean
 
-    fun buildPolicy(init: PolicyBuilder.() -> Unit): String
+    fun buildStatement(configure: StatementBuilder.() -> Unit): Statement
 
-    fun buildStatement(init: StatementBuilder.() -> Unit): Statement
-
-    fun buildPrincipal(init: PrincipalBuilder.() -> Unit): Principal
+    fun buildPrincipal(configure: PrincipalBuilder.() -> Unit): Principal
 }
 
 val minioConfBuilder: S3Configuration =

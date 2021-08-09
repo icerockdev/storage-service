@@ -7,6 +7,7 @@ import com.icerockdev.service.storage.s3.S3StorageImpl
 import com.icerockdev.service.storage.s3.minioConfBuilder
 import com.icerockdev.service.storage.s3.policy.dto.ActionEnum
 import com.icerockdev.service.storage.s3.policy.dto.EffectEnum
+import com.icerockdev.service.storage.s3.policy.dto.PrincipalEnum
 import io.github.cdimascio.dotenv.dotenv
 import java.io.FileInputStream
 import java.io.IOException
@@ -358,25 +359,23 @@ class S3StorageTest {
         val currentPolicy = storage.getBucketPolicy(bucketName)
         assertNull(currentPolicy)
 
-        val newPolicy = storage.buildPolicy {
+        val putPolicyResult = storage.putBucketPolicy(bucketName, {
             statement.add(
                 storage.buildStatement {
-                    effect = EffectEnum.Allow
+                    effect = EffectEnum.ALLOW
 
-                    action.add(ActionEnum.DeleteObject)
-                    action.add(ActionEnum.GetObject)
-                    action.add(ActionEnum.PutObject)
+                    action.add(ActionEnum.DELETE_OBJECT)
+                    action.add(ActionEnum.GET_OBJECT)
+                    action.add(ActionEnum.PUT_OBJECT)
 
                     resource.add("arn:aws:s3:::test-bucket/*")
 
                     principal = storage.buildPrincipal {
-                        aws.add("*")
+                        aws.add(PrincipalEnum.PUBLIC_ACCESS.accessName)
                     }
                 }
             )
-        }
-        println("Polict: $newPolicy")
-        val putPolicyResult = storage.putBucketPolicy(bucketName, newPolicy)
+        })
         assertTrue(putPolicyResult)
 
         val deletePolicyResult = storage.deleteBucketPolicy(bucketName)
@@ -384,6 +383,22 @@ class S3StorageTest {
 
         val policyAfterDelete = storage.getBucketPolicy(bucketName)
         assertNull(policyAfterDelete)
+
+        val putBigPolicyResult = storage.putBucketPolicy(bucketName, {
+            statement.add(
+                storage.buildStatement {
+                    effect = EffectEnum.ALLOW
+                    action.add(ActionEnum.GET_OBJECT)
+                    for (backetNum in 1..1000) {
+                        resource.add("arn:aws:s3:::test-bucket/$backetNum")
+                    }
+                    principal = storage.buildPrincipal {
+                        aws.add(PrincipalEnum.PUBLIC_ACCESS.accessName)
+                    }
+                }
+            )
+        })
+        assertFalse(putBigPolicyResult)
     }
 
     @After

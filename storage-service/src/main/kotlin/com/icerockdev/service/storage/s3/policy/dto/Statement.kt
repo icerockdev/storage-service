@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 data class Statement(
     @JsonProperty("Effect")
-    val effect: EffectEnum,
+    val effect: String,
     @JsonProperty("Principal")
     val principal: Principal?,
     @JsonProperty("NotPrincipal")

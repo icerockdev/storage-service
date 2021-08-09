@@ -17,6 +17,9 @@ class StatementBuilder {
     var condition: String? = null
 
     fun build(): Statement {
+        if (effect === null) {
+            throw Exception("Effect must be filled")
+        }
         if (action.isEmpty() && notAction.isEmpty()) {
             throw Exception("Action or NotAction must be filled")
         }

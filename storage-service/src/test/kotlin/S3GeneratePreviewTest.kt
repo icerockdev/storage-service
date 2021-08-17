@@ -92,7 +92,7 @@ class S3GeneratePreviewTest {
 
         val file = classLoader.getResource(dotenv["JPG_TEST_OBJECT"])?.file
             ?: throw Exception("JPG File not found")
-        var stream = FileInputStream(file)
+        val stream = FileInputStream(file)
 
         storage.put(bucketName, fileName, stream)
 

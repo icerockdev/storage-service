@@ -8,10 +8,21 @@ import com.icerockdev.service.storage.s3.minioConfBuilder
 import com.icerockdev.service.storage.s3.policy.dto.ActionEnum
 import com.icerockdev.service.storage.s3.policy.dto.EffectEnum
 import com.icerockdev.service.storage.s3.policy.dto.PrincipalEnum
+import com.icerockdev.service.storage.s3.policy.dto.ResourceEnum
 import io.github.cdimascio.dotenv.dotenv
+import kotlinx.coroutines.runBlocking
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.presigner.S3Presigner
 import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStream
+import java.io.Serializable
 import java.net.URI
 import java.net.URLConnection
 import java.net.http.HttpClient
@@ -26,17 +37,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 import kotlin.test.assertNull
-import kotlinx.coroutines.runBlocking
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
-import software.amazon.awssdk.regions.Region
-import software.amazon.awssdk.services.s3.S3Client
-import software.amazon.awssdk.services.s3.presigner.S3Presigner
+import kotlin.test.assertTrue
 
 
 class S3StorageTest {
@@ -430,7 +432,7 @@ class S3StorageTest {
                     action.add(ActionEnum.GET_OBJECT)
                     action.add(ActionEnum.PUT_OBJECT)
 
-                    resource.add("arn:aws:s3:::test-bucket/*")
+                    resource.add(ResourceEnum.ALL.resourceName)
 
                     principal = storage.buildPrincipal {
                         aws.add(PrincipalEnum.PUBLIC_ACCESS.accessName)
@@ -439,6 +441,10 @@ class S3StorageTest {
             )
         }
         assertTrue(putPolicyResult)
+        assertEquals(
+            storage.getBucketPolicy(bucketName)?.substring(153, 167),
+            ResourceEnum.ALL.resourceName
+        )
 
         val currentPolicy = storage.getBucketPolicy(bucketName)
         assertNotNull(currentPolicy)
@@ -448,9 +454,9 @@ class S3StorageTest {
                 storage.buildStatement {
                     effect = EffectEnum.ALLOW
                     action.add(ActionEnum.GET_OBJECT)
-                    resource.add("arn:aws:s3:::test-bucket/*")
+                    resource.add(ResourceEnum.ALL.resourceName)
                     for (bucketNum in 1..1000) {
-                        resource.add("arn:aws:s3:::test-bucket/$bucketNum")
+                        resource.add(ResourceEnum.FROM_RANGE.addNum(bucketNum))
                     }
                     principal = storage.buildPrincipal {
                         aws.add(PrincipalEnum.PUBLIC_ACCESS.accessName)

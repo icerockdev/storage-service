@@ -4,7 +4,6 @@ import com.icerockdev.service.storage.s3.policy.dto.ActionEnum
 import com.icerockdev.service.storage.s3.policy.dto.EffectEnum
 import com.icerockdev.service.storage.s3.policy.dto.Principal
 import com.icerockdev.service.storage.s3.policy.dto.Statement
-import java.lang.Exception
 
 class StatementBuilder {
     var effect: EffectEnum? = null

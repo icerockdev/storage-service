@@ -1,7 +1,7 @@
 package com.icerockdev.service.storage.s3.policy.builder
 
+import com.icerockdev.service.storage.exception.S3StorageException
 import com.icerockdev.service.storage.s3.policy.dto.Principal
-import java.lang.Exception
 
 class PrincipalBuilder() {
     var aws: MutableList<String> = mutableListOf()
@@ -11,7 +11,7 @@ class PrincipalBuilder() {
 
     fun build(): Principal {
         if (aws.isEmpty() && canonicalUser === null && federated === null && service.isEmpty()) {
-            throw Exception("Principal configuration not filled")
+            throw S3StorageException("Principal configuration not filled")
         }
 
         return Principal(aws = aws, canonicalUser = canonicalUser, federated = federated, service = service)

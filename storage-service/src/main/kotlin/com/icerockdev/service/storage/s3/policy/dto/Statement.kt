@@ -12,9 +12,9 @@ data class Statement(
     @JsonProperty("NotPrincipal")
     val notPrincipal: Principal?,
     @JsonProperty("Action")
-    val action: List<String>,
+    val action: List<String> = emptyList(),
     @JsonProperty("NotAction")
-    val notAction: List<String>,
+    val notAction: List<String> = emptyList(),
     @JsonProperty("Resource")
     val resource: List<String>?,
     @JsonProperty("NotResource")

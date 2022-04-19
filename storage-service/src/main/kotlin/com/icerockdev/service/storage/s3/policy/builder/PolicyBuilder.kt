@@ -1,9 +1,9 @@
 package com.icerockdev.service.storage.s3.policy.builder
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.icerockdev.service.storage.exception.S3StorageException
 import com.icerockdev.service.storage.s3.policy.dto.Policy
 import com.icerockdev.service.storage.s3.policy.dto.Statement
-import java.lang.Exception
 
 /**
  * **See Also:** [Bucket policy examples](https://docs.aws.amazon.com/AmazonS3/latest/userguide/example-bucket-policies.html)
@@ -17,7 +17,7 @@ class PolicyBuilder {
 
     fun build(): String {
         if (statement.isEmpty()) {
-            throw Exception("Statement in empty")
+            throw S3StorageException("Statement in empty")
         }
 
         val policy = jacksonObjectMapper().writeValueAsString(
@@ -30,7 +30,7 @@ class PolicyBuilder {
         )
 
         if (policy.toByteArray().size > policySizeLimit) {
-            throw Exception("Policy exceeds the maximum allowed document size")
+            throw S3StorageException("Policy exceeds the maximum allowed document size")
         }
 
         return policy

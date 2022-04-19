@@ -12,5 +12,5 @@ data class Principal(
     @JsonProperty("Federated")
     val federated: String?,
     @JsonProperty("Service")
-    val service: List<String>,
+    val service: List<String> = emptyList(),
 )

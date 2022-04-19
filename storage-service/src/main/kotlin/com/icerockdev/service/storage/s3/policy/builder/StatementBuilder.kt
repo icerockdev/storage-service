@@ -1,5 +1,6 @@
 package com.icerockdev.service.storage.s3.policy.builder
 
+import com.icerockdev.service.storage.exception.S3StorageException
 import com.icerockdev.service.storage.s3.policy.dto.ActionEnum
 import com.icerockdev.service.storage.s3.policy.dto.EffectEnum
 import com.icerockdev.service.storage.s3.policy.dto.Principal
@@ -18,16 +19,16 @@ class StatementBuilder {
     fun build(): Statement {
         val effect = effect
         if (effect === null) {
-            throw Exception("Effect must be filled")
+            throw S3StorageException("Effect must be filled")
         }
         if (action.isEmpty() && notAction.isEmpty()) {
-            throw Exception("Action or NotAction must be filled")
+            throw S3StorageException("Action or NotAction must be filled")
         }
         if (principal === null && notPrincipal === null) {
-            throw Exception("Principal or NotPrincipal must be filled")
+            throw S3StorageException("Principal or NotPrincipal must be filled")
         }
         if (resource.isEmpty() && notResource.isEmpty()) {
-            throw Exception("Resource or NotResource must be filled")
+            throw S3StorageException("Resource or NotResource must be filled")
         }
 
         return Statement(

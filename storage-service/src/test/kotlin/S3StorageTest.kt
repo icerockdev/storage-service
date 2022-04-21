@@ -5,6 +5,7 @@
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.icerockdev.service.storage.exception.S3StorageException
+import com.icerockdev.service.storage.mime.MimeTypeDetector
 import com.icerockdev.service.storage.s3.IS3Storage
 import com.icerockdev.service.storage.s3.S3StorageImpl
 import com.icerockdev.service.storage.s3.minioConfBuilder
@@ -15,14 +16,6 @@ import com.icerockdev.service.storage.s3.policy.dto.PrincipalEnum
 import com.icerockdev.service.storage.s3.policy.dto.ResourceEnum
 import io.github.cdimascio.dotenv.dotenv
 import kotlinx.coroutines.runBlocking
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
-import software.amazon.awssdk.regions.Region
-import software.amazon.awssdk.services.s3.S3Client
-import software.amazon.awssdk.services.s3.presigner.S3Presigner
 import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStream
@@ -40,10 +33,17 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
-import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.presigner.S3Presigner
 
 
 class S3StorageTest {
@@ -255,6 +255,7 @@ class S3StorageTest {
         }
 
         val (jpgFileName, jpgStream) = getFile(FileType.JPG)
+        val mimeType = MimeTypeDetector.detect(jpgStream)
         val jpgFileByteArray = jpgStream.readAllBytes()
 
         jpgStream.close()
@@ -270,7 +271,8 @@ class S3StorageTest {
 
         val jpgObject = storage.get(bucketName, jpgFileName)
 
-        assertEquals("image/jpeg", jpgObject?.response()?.contentType())
+        assertEquals("image/jpeg", mimeType.toString())
+        assertEquals(mimeType.toString(), jpgObject?.response()?.contentType())
 
         assertEquals(jpgFileByteArray.size.toLong(), jpgObject?.response()?.contentLength())
 
@@ -424,6 +426,23 @@ class S3StorageTest {
     }
 
     @Test
+    fun testMimeTypeDetect() {
+        val (_, jpgStream) = getFile(FileType.JPG)
+        val (_, pngStream) = getFile(FileType.PNG)
+        val (_, gifStream) = getFile(FileType.GIF)
+        val (_, pdfStream) = getFile(FileType.PDF)
+        val (_, zipStream) = getFile(FileType.ZIP)
+        val (_, binStream) = getFile(FileType.BIN)
+
+        assertEquals("image/jpeg", MimeTypeDetector.detect(jpgStream).toString())
+        assertEquals("image/png", MimeTypeDetector.detect(pngStream).toString())
+        assertEquals("image/gif", MimeTypeDetector.detect(gifStream).toString())
+        assertEquals("application/pdf", MimeTypeDetector.detect(pdfStream).toString())
+        assertEquals("application/zip", MimeTypeDetector.detect(zipStream).toString())
+        assertEquals("application/octet-stream", MimeTypeDetector.detect(binStream).toString())
+    }
+
+    @Test
     fun testPolicy() {
         if (!storage.bucketExist(bucketName)) {
             storage.createBucket(bucketName)
@@ -477,9 +496,9 @@ class S3StorageTest {
         }
         assertFalse(putBigPolicyResult)
 
-        assertNotEquals(
-            bigTestStatement.resource,
-            policyStatement?.resource
+        assertEquals(
+            bigTestStatement.resource?.first(),
+            policyStatement?.resource?.first()
         )
 
         assertFailsWith<S3StorageException>(block = {
@@ -538,6 +557,9 @@ class S3StorageTest {
             FileType.JPG -> dotenv["JPG_TEST_OBJECT"] ?: throw Exception("JPG File not found")
             FileType.GIF -> dotenv["GIF_TEST_OBJECT"] ?: throw Exception("GIF File not found")
             FileType.PNG -> dotenv["PNG_TEST_OBJECT"] ?: throw Exception("PNG File not found")
+            FileType.PDF -> dotenv["PDF_TEST_OBJECT"] ?: throw Exception("PDF File not found")
+            FileType.ZIP -> dotenv["ZIP_TEST_OBJECT"] ?: throw Exception("ZIP File not found")
+            FileType.BIN -> dotenv["BIN_TEST_OBJECT"] ?: throw Exception("BIN File not found")
         }
 
         return key to (classLoader.getResourceAsStream(fileName) ?: throw Exception("File not readable"))
@@ -546,7 +568,10 @@ class S3StorageTest {
     private enum class FileType {
         JPG,
         GIF,
-        PNG;
+        PNG,
+        PDF,
+        ZIP,
+        BIN;
     }
 
     @Throws(IOException::class)
@@ -570,10 +595,6 @@ class S3StorageTest {
             i1.close()
             i2.close()
         }
-    }
-
-    private fun getContentType(stream: InputStream): String? {
-        return URLConnection.guessContentTypeFromStream(stream)
     }
 
     companion object {

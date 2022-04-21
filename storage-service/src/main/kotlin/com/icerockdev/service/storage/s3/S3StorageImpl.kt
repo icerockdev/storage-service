@@ -16,11 +16,11 @@ import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.*
 import software.amazon.awssdk.services.s3.presigner.S3Presigner
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest
+import com.icerockdev.service.storage.mime.MimeTypeDetector
 import java.io.BufferedInputStream
 import java.io.InputStream
 import java.net.MalformedURLException
 import java.net.URI
-import java.net.URLConnection
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.time.Duration
@@ -31,6 +31,7 @@ import software.amazon.awssdk.services.s3.model.CreateBucketRequest
 import software.amazon.awssdk.services.s3.model.DeleteBucketRequest
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
+import software.amazon.awssdk.services.s3.model.GetObjectResponse
 import software.amazon.awssdk.services.s3.model.GetUrlRequest
 import software.amazon.awssdk.services.s3.model.HeadBucketRequest
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest
@@ -41,9 +42,6 @@ import software.amazon.awssdk.services.s3.model.ObjectCannedACL
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.services.s3.model.S3Exception
 import software.amazon.awssdk.services.s3.model.S3Object
-import software.amazon.awssdk.services.s3.model.GetBucketPolicyRequest
-import software.amazon.awssdk.services.s3.model.PutBucketPolicyRequest
-import software.amazon.awssdk.services.s3.model.DeleteBucketPolicyRequest
 
 /**
  * TODO: implements S3AsyncClient and change to coroutine usage
@@ -187,14 +185,13 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
     }
 
     private fun put(bucket: String, key: String, stream: BufferedInputStream, metadata: Map<String, String>?): Boolean {
-        val contentType = URLConnection.guessContentTypeFromStream(stream)
 
         val request = PutObjectRequest.builder()
             .bucket(bucket)
             .key(key)
             .acl(ObjectCannedACL.PUBLIC_READ)
             .contentEncoding("UTF-8")
-            .contentType(contentType)
+            .contentType(MimeTypeDetector.detect(stream).toString())
             .metadata(metadata ?: emptyMap())
             .build()
 
@@ -261,7 +258,6 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
         configure: PolicyBuilder.() -> Unit
     ): Boolean {
         return try {
-            val p = PolicyBuilder().apply(configure).build()
             val response = client.putBucketPolicy(
                 PutBucketPolicyRequest.builder()
                     .bucket(bucket)

@@ -6,7 +6,7 @@ package com.icerockdev.service.storage.preview
 
 import java.util.concurrent.ConcurrentHashMap
 
-class PreviewConfig() {
+class PreviewConfig {
     private val map: MutableMap<String, AbstractPreview> = ConcurrentHashMap<String, AbstractPreview>()
 
     fun append(alias: String, preview: AbstractPreview) {

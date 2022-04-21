@@ -4,7 +4,6 @@
 
 package com.icerockdev.service.storage.preview
 
-import com.sksamuel.scrimage.ScaleMethod
 import com.sksamuel.scrimage.nio.ImageWriter
 
 abstract class AbstractPreview(

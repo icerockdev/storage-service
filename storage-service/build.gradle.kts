@@ -1,8 +1,8 @@
-import java.util.Base64
-import kotlin.text.String
 /*
  * Copyright 2020 IceRock MAG Inc. Use of this source code is governed by the Apache 2.0 license.
  */
+import java.util.Base64
+
 plugins {
     id("org.jetbrains.kotlin.jvm")
     id("kotlin-kapt")
@@ -15,7 +15,7 @@ apply(plugin = "java")
 apply(plugin = "kotlin")
 
 group = "com.icerockdev"
-version = "0.5.2"
+version = "0.5.3"
 
 val sourcesJar by tasks.registering(Jar::class) {
     archiveClassifier.set("sources")
@@ -27,6 +27,8 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${properties["kotlin_version"]}")
     // AWS S3 SDK
     api("software.amazon.awssdk:s3:${properties["aws_sdk_s3_version"]}")
+    // Apache Tika
+    implementation("org.apache.tika:tika-core:${properties["apache_tika_version"]}")
     // Logging
     implementation("ch.qos.logback:logback-classic:${properties["logback_version"]}")
     // Coroutines
@@ -104,17 +106,25 @@ publishing {
                     developerConnection.set("scm:git:ssh://github.com/icerockdev/storage-service.git")
                     url.set("https://github.com/icerockdev/storage-service")
                 }
+
+                organization {
+                    name.set("IceRock Development")
+                    url.set("https://icerockdev.com")
+                }
             }
         }
 
-        signing {
-            val signingKeyId: String? = System.getenv("SIGNING_KEY_ID")
-            val signingPassword: String? = System.getenv("SIGNING_PASSWORD")
-            val signingKey: String? = System.getenv("SIGNING_KEY")?.let { base64Key ->
-                String(Base64.getDecoder().decode(base64Key))
+        val withoutSigning: Boolean = project.gradle.startParameter.taskNames.contains("publishToMavenLocal")
+        if (!withoutSigning) {
+            signing {
+                val signingKeyId: String? = System.getenv("SIGNING_KEY_ID")
+                val signingPassword: String? = System.getenv("SIGNING_PASSWORD")
+                val signingKey: String? = System.getenv("SIGNING_KEY")?.let { base64Key ->
+                    String(Base64.getDecoder().decode(base64Key))
+                }
+                useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+                sign(publishing.publications["mavenJava"])
             }
-            useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
-            sign(publishing.publications["mavenJava"])
         }
     }
 }

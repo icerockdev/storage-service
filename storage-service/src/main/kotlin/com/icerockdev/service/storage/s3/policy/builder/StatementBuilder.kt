@@ -4,6 +4,7 @@ import com.icerockdev.service.storage.exception.S3StorageException
 import com.icerockdev.service.storage.s3.policy.dto.ActionEnum
 import com.icerockdev.service.storage.s3.policy.dto.EffectEnum
 import com.icerockdev.service.storage.s3.policy.dto.Principal
+import com.icerockdev.service.storage.s3.policy.dto.Resource
 import com.icerockdev.service.storage.s3.policy.dto.Statement
 
 class StatementBuilder {

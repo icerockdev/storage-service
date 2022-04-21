@@ -17,6 +17,8 @@ import software.amazon.awssdk.services.s3.model.*
 import software.amazon.awssdk.services.s3.presigner.S3Presigner
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest
 import com.icerockdev.service.storage.mime.MimeTypeDetector
+import com.icerockdev.service.storage.s3.policy.builder.ResourceBuilder
+import com.icerockdev.service.storage.s3.policy.dto.Resource
 import java.io.BufferedInputStream
 import java.io.InputStream
 import java.net.MalformedURLException
@@ -294,6 +296,9 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
 
     override fun buildPrincipal(configure: PrincipalBuilder.() -> Unit): Principal =
         PrincipalBuilder().apply(configure).build()
+
+    override fun buildResource(configure: ResourceBuilder.() -> Unit): String =
+        ResourceBuilder().apply(configure).build()
 
     companion object {
         private val logger = LoggerFactory.getLogger(S3StorageImpl::class.java)

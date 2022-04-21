@@ -16,9 +16,9 @@ data class Statement(
     @JsonProperty("NotAction")
     val notAction: List<String> = emptyList(),
     @JsonProperty("Resource")
-    val resource: List<String>?,
+    val resource: List<String> = emptyList(),
     @JsonProperty("NotResource")
-    val notResource: List<String>?,
+    val notResource: List<String> = emptyList(),
     @JsonProperty("Condition")
     val condition: String?,
 )

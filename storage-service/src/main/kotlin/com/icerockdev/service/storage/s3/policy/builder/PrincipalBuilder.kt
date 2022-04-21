@@ -3,7 +3,7 @@ package com.icerockdev.service.storage.s3.policy.builder
 import com.icerockdev.service.storage.exception.S3StorageException
 import com.icerockdev.service.storage.s3.policy.dto.Principal
 
-class PrincipalBuilder() {
+class PrincipalBuilder {
     var aws: MutableList<String> = mutableListOf()
     var canonicalUser: String? = null
     var federated: String? = null

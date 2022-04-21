@@ -13,14 +13,20 @@ import com.icerockdev.service.storage.s3.policy.dto.ActionEnum
 import com.icerockdev.service.storage.s3.policy.dto.EffectEnum
 import com.icerockdev.service.storage.s3.policy.dto.Policy
 import com.icerockdev.service.storage.s3.policy.dto.PrincipalEnum
-import com.icerockdev.service.storage.s3.policy.dto.ResourceEnum
 import io.github.cdimascio.dotenv.dotenv
 import kotlinx.coroutines.runBlocking
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.presigner.S3Presigner
 import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.net.URI
-import java.net.URLConnection
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
@@ -33,17 +39,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
-import software.amazon.awssdk.regions.Region
-import software.amazon.awssdk.services.s3.S3Client
-import software.amazon.awssdk.services.s3.presigner.S3Presigner
 
 
 class S3StorageTest {
@@ -454,7 +453,7 @@ class S3StorageTest {
             action.add(ActionEnum.GET_OBJECT)
             action.add(ActionEnum.PUT_OBJECT)
 
-            resource.add(ResourceEnum.ALL.resourceName)
+            resource.add(storage.buildResource {})
 
             principal = storage.buildPrincipal {
                 aws.add(PrincipalEnum.PUBLIC_ACCESS.accessName)
@@ -482,9 +481,18 @@ class S3StorageTest {
         val bigTestStatement = storage.buildStatement {
             effect = EffectEnum.ALLOW
             action.add(ActionEnum.GET_OBJECT)
-            resource.add(ResourceEnum.ALL.resourceName)
+            resource.add(
+                storage.buildResource {
+                    bucket = bucketName
+                }
+            )
             for (bucketNum in 1..1000) {
-                resource.add(ResourceEnum.FROM_RANGE.addNum(bucketNum))
+                resource.add(
+                    storage.buildResource {
+                        bucket = bucketName
+                        detailRoute = bucketNum.toString()
+                    }
+                )
             }
             principal = storage.buildPrincipal {
                 aws.add(PrincipalEnum.PUBLIC_ACCESS.accessName)
@@ -496,15 +504,15 @@ class S3StorageTest {
         }
         assertFalse(putBigPolicyResult)
 
-        assertEquals(
-            bigTestStatement.resource?.first(),
-            policyStatement?.resource?.first()
+        assertNotEquals(
+            bigTestStatement.resource,
+            policyStatement?.resource
         )
 
         assertFailsWith<S3StorageException>(block = {
             storage.buildStatement {
                 effect = EffectEnum.ALLOW
-                resource.add(ResourceEnum.ALL.resourceName)
+                resource.add(storage.buildResource {})
                 principal = storage.buildPrincipal {
                     aws.add(PrincipalEnum.PUBLIC_ACCESS.accessName)
                 }
@@ -514,7 +522,7 @@ class S3StorageTest {
         assertFailsWith<S3StorageException>(block = {
             storage.buildStatement {
                 effect = EffectEnum.ALLOW
-                resource.add(ResourceEnum.ALL.resourceName)
+                resource.add(storage.buildResource {})
                 action.add(ActionEnum.GET_OBJECT)
             }
         })
@@ -533,7 +541,7 @@ class S3StorageTest {
             storage.buildStatement {
                 effect = EffectEnum.ALLOW
                 action.add(ActionEnum.GET_OBJECT)
-                resource.add(ResourceEnum.ALL.resourceName)
+                resource.add(storage.buildResource { })
                 principal = storage.buildPrincipal {
                 }
             }

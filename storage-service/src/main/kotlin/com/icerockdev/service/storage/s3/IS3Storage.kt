@@ -4,12 +4,14 @@
 
 package com.icerockdev.service.storage.s3
 
-import software.amazon.awssdk.core.ResponseInputStream
 import com.icerockdev.service.storage.s3.policy.builder.PolicyBuilder
 import com.icerockdev.service.storage.s3.policy.builder.PrincipalBuilder
+import com.icerockdev.service.storage.s3.policy.builder.ResourceBuilder
 import com.icerockdev.service.storage.s3.policy.builder.StatementBuilder
 import com.icerockdev.service.storage.s3.policy.dto.Principal
+import com.icerockdev.service.storage.s3.policy.dto.Resource
 import com.icerockdev.service.storage.s3.policy.dto.Statement
+import software.amazon.awssdk.core.ResponseInputStream
 import software.amazon.awssdk.services.s3.S3Configuration
 import software.amazon.awssdk.services.s3.model.GetObjectResponse
 import software.amazon.awssdk.services.s3.model.S3Object
@@ -64,6 +66,8 @@ interface IS3Storage {
     fun buildStatement(configure: StatementBuilder.() -> Unit): Statement
 
     fun buildPrincipal(configure: PrincipalBuilder.() -> Unit): Principal
+
+    fun buildResource(configure: ResourceBuilder.() -> Unit): String
 }
 
 val minioConfBuilder: S3Configuration =

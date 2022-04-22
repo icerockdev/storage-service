@@ -2,7 +2,6 @@
  * Copyright 2020 IceRock MAG Inc. Use of this source code is governed by the Apache 2.0 license.
  */
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.icerockdev.service.storage.exception.S3StorageException
 import com.icerockdev.service.storage.mime.MimeTypeDetector
@@ -13,6 +12,7 @@ import com.icerockdev.service.storage.s3.policy.dto.ActionEnum
 import com.icerockdev.service.storage.s3.policy.dto.EffectEnum
 import com.icerockdev.service.storage.s3.policy.dto.Policy
 import com.icerockdev.service.storage.s3.policy.dto.PrincipalEnum
+import com.icerockdev.service.storage.serializer
 import io.github.cdimascio.dotenv.dotenv
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -51,7 +51,6 @@ class S3StorageTest {
     }
     private val bucketName = dotenv["S3_BUCKET"]!!
     private val classLoader = javaClass.classLoader
-    private val serializer = jacksonObjectMapper()
 
     @Before
     fun init() {

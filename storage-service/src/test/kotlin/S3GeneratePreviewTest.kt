@@ -13,11 +13,6 @@ import com.icerockdev.service.storage.s3.IS3Storage
 import com.icerockdev.service.storage.s3.S3StorageImpl
 import com.icerockdev.service.storage.s3.minioConfBuilder
 import io.github.cdimascio.dotenv.dotenv
-import java.awt.Color
-import java.io.FileInputStream
-import java.net.URI
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
@@ -27,6 +22,11 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.presigner.S3Presigner
+import java.awt.Color
+import java.io.FileInputStream
+import java.net.URI
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class S3GeneratePreviewTest {
     private val dotenv = dotenv {
@@ -91,7 +91,7 @@ class S3GeneratePreviewTest {
         val fileName = storage.generateFileKey()
 
         val file = classLoader.getResource(dotenv["JPG_TEST_OBJECT"])?.file
-            ?: throw Exception("JPG File not found")
+            ?: throw NullPointerException("JPG File not found")
         val stream = FileInputStream(file)
 
         storage.put(bucketName, fileName, stream)

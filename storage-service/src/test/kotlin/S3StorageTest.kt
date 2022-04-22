@@ -329,7 +329,7 @@ class S3StorageTest {
 
         val fileName = storage.generateFileKey()
         val stream = classLoader.getResourceAsStream(dotenv["JPG_TEST_OBJECT"])
-            ?: throw Exception("JPG File not found")
+            ?: throw NullPointerException("JPG File not found")
 
         // Check wrong cases
         assertFalse {
@@ -392,7 +392,7 @@ class S3StorageTest {
         val fileName2 = "temp/somefile"
 
         val file = classLoader.getResource(dotenv["JPG_TEST_OBJECT"])?.file
-            ?: throw Exception("JPG File not found")
+            ?: throw NullPointerException("JPG File not found")
         var stream = FileInputStream(file)
 
         storage.put(bucketName, fileName1, stream)

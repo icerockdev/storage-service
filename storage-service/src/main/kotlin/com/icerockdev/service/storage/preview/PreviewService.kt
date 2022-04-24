@@ -68,7 +68,7 @@ class PreviewService(
                     storage.put(dstBucket, dstKey, preview)
                 }
 
-        } catch (e: Exception) {
+        } catch (e: NullPointerException) {
             logger.error(e.localizedMessage, e)
             return false
         }
@@ -93,7 +93,7 @@ class PreviewService(
                     storage.delete(dstBucket, dstKey)
                 }
 
-        } catch (e: Exception) {
+        } catch (e: NullPointerException) {
             logger.error(e.localizedMessage, e)
             return false
         }

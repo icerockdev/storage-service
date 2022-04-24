@@ -497,11 +497,11 @@ class S3StorageTest {
                 aws.add(PrincipalEnum.PUBLIC_ACCESS.accessName)
             }
         }
-
-        val putBigPolicyResult = storage.putBucketPolicy(bucketName) {
-            statement.add(bigTestStatement)
-        }
-        assertFalse(putBigPolicyResult)
+        assertFailsWith<S3StorageException>(block = {
+            storage.putBucketPolicy(bucketName) {
+                statement.add(bigTestStatement)
+            }
+        })
 
         assertNotEquals(
             bigTestStatement.resource,

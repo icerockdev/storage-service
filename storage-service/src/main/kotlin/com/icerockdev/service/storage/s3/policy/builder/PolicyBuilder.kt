@@ -1,9 +1,9 @@
 package com.icerockdev.service.storage.s3.policy.builder
 
+import com.icerockdev.service.storage.Serializer
 import com.icerockdev.service.storage.exception.S3StorageException
 import com.icerockdev.service.storage.s3.policy.dto.Policy
 import com.icerockdev.service.storage.s3.policy.dto.Statement
-import com.icerockdev.service.storage.serializer
 
 /**
  * **See Also:** [Bucket policy examples](https://docs.aws.amazon.com/AmazonS3/latest/userguide/example-bucket-policies.html)
@@ -20,7 +20,7 @@ class PolicyBuilder {
             throw S3StorageException("Statement in empty")
         }
 
-        val policy = serializer.writeValueAsString(
+        val policy = Serializer.serialize(
             Policy(
                 version = actualPolicyLanguageVersion,
                 id = id,

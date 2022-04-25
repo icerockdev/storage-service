@@ -3,6 +3,7 @@
  */
 
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.icerockdev.service.storage.Serializer
 import com.icerockdev.service.storage.exception.S3StorageException
 import com.icerockdev.service.storage.mime.MimeTypeDetector
 import com.icerockdev.service.storage.s3.IS3Storage
@@ -12,7 +13,6 @@ import com.icerockdev.service.storage.s3.policy.dto.ActionEnum
 import com.icerockdev.service.storage.s3.policy.dto.EffectEnum
 import com.icerockdev.service.storage.s3.policy.dto.Policy
 import com.icerockdev.service.storage.s3.policy.dto.PrincipalEnum
-import com.icerockdev.service.storage.serializer
 import io.github.cdimascio.dotenv.dotenv
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -465,7 +465,7 @@ class S3StorageTest {
         assertTrue(putPolicyResult)
 
         val policyStatement = storage.getBucketPolicy(bucketName)?.let {
-            serializer.readValue<Policy>(it)
+            Serializer.deserialize<Policy>(it)
         }?.statement?.first()
 
         assertEquals(testStatement.action.sorted(), policyStatement?.action?.sorted())

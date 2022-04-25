@@ -8,6 +8,7 @@ import com.icerockdev.service.storage.s3.IS3Storage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
@@ -57,21 +58,18 @@ class PreviewService(
             storage.get(srcBucket, srcKey)?.use { it.readBytes() }
         } ?: return false
 
-        try {
-            previewConfig.asFlow()
-                .buffer(configuration.operationParallel)
-                .flowOn(Dispatchers.IO)
-                .collect {
-                    val preview = it.imageProcessor(it, imageBytes)
-                    val dstKey = getPreviewName(srcKey, it)
+        previewConfig.asFlow()
+            .buffer(configuration.operationParallel)
+            .flowOn(Dispatchers.IO)
+            .catch { cause ->
+                throw PreviewException(cause.localizedMessage, cause)
+            }
+            .collect {
+                val preview = it.imageProcessor(it, imageBytes)
+                val dstKey = getPreviewName(srcKey, it)
 
-                    storage.put(dstBucket, dstKey, preview)
-                }
-
-        } catch (e: NullPointerException) {
-            logger.error(e.localizedMessage, e)
-            return false
-        }
+                storage.put(dstBucket, dstKey, preview)
+            }
 
         return true
     }
@@ -84,19 +82,16 @@ class PreviewService(
             return true
         }
 
-        try {
-            previewConfig.asFlow()
-                .buffer(configuration.operationParallel)
-                .flowOn(Dispatchers.IO)
-                .collect {
-                    val dstKey = getPreviewName(srcKey, it)
-                    storage.delete(dstBucket, dstKey)
-                }
-
-        } catch (e: NullPointerException) {
-            logger.error(e.localizedMessage, e)
-            return false
-        }
+        previewConfig.asFlow()
+            .buffer(configuration.operationParallel)
+            .flowOn(Dispatchers.IO)
+            .catch { cause ->
+                throw PreviewException(cause.localizedMessage, cause)
+            }
+            .collect {
+                val dstKey = getPreviewName(srcKey, it)
+                storage.delete(dstBucket, dstKey)
+            }
 
         return true
     }

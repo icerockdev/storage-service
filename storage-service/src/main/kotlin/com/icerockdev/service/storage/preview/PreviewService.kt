@@ -8,6 +8,7 @@ import com.icerockdev.service.storage.s3.IS3Storage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
@@ -61,14 +62,16 @@ class PreviewService(
             previewConfig.asFlow()
                 .buffer(configuration.operationParallel)
                 .flowOn(Dispatchers.IO)
+                .catch { cause ->
+                    throw PreviewException(cause.localizedMessage, cause)
+                }
                 .collect {
                     val preview = it.imageProcessor(it, imageBytes)
                     val dstKey = getPreviewName(srcKey, it)
 
                     storage.put(dstBucket, dstKey, preview)
                 }
-
-        } catch (e: Exception) {
+        } catch (e: PreviewException){
             logger.error(e.localizedMessage, e)
             return false
         }
@@ -88,12 +91,14 @@ class PreviewService(
             previewConfig.asFlow()
                 .buffer(configuration.operationParallel)
                 .flowOn(Dispatchers.IO)
+                .catch { cause ->
+                    throw PreviewException(cause.localizedMessage, cause)
+                }
                 .collect {
                     val dstKey = getPreviewName(srcKey, it)
                     storage.delete(dstBucket, dstKey)
                 }
-
-        } catch (e: Exception) {
+        } catch (e: PreviewException){
             logger.error(e.localizedMessage, e)
             return false
         }

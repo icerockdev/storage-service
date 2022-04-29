@@ -5,13 +5,12 @@
 package com.icerockdev.service.storage.s3
 
 import com.icerockdev.service.storage.mime.MimeTypeDetector
-import java.io.BufferedInputStream
-import java.io.InputStream
-import java.net.MalformedURLException
-import java.net.URI
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
-import java.time.Duration
+import com.icerockdev.service.storage.s3.policy.builder.PolicyBuilder
+import com.icerockdev.service.storage.s3.policy.builder.PrincipalBuilder
+import com.icerockdev.service.storage.s3.policy.builder.ResourceBuilder
+import com.icerockdev.service.storage.s3.policy.builder.StatementBuilder
+import com.icerockdev.service.storage.s3.policy.dto.Principal
+import com.icerockdev.service.storage.s3.policy.dto.Statement
 import org.slf4j.LoggerFactory
 import software.amazon.awssdk.core.ResponseInputStream
 import software.amazon.awssdk.core.sync.RequestBody
@@ -20,8 +19,10 @@ import software.amazon.awssdk.services.s3.model.BucketAlreadyExistsException
 import software.amazon.awssdk.services.s3.model.BucketAlreadyOwnedByYouException
 import software.amazon.awssdk.services.s3.model.CopyObjectRequest
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest
+import software.amazon.awssdk.services.s3.model.DeleteBucketPolicyRequest
 import software.amazon.awssdk.services.s3.model.DeleteBucketRequest
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
+import software.amazon.awssdk.services.s3.model.GetBucketPolicyRequest
 import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.services.s3.model.GetObjectResponse
 import software.amazon.awssdk.services.s3.model.GetUrlRequest
@@ -31,11 +32,19 @@ import software.amazon.awssdk.services.s3.model.ListObjectsV2Request
 import software.amazon.awssdk.services.s3.model.NoSuchBucketException
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException
 import software.amazon.awssdk.services.s3.model.ObjectCannedACL
+import software.amazon.awssdk.services.s3.model.PutBucketPolicyRequest
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.services.s3.model.S3Exception
 import software.amazon.awssdk.services.s3.model.S3Object
 import software.amazon.awssdk.services.s3.presigner.S3Presigner
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest
+import java.io.BufferedInputStream
+import java.io.InputStream
+import java.net.MalformedURLException
+import java.net.URI
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+import java.time.Duration
 
 /**
  * TODO: implements S3AsyncClient and change to coroutine usage
@@ -75,7 +84,8 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
                     .getObjectRequest(getObjectRequest)
                     .build()
             ).url().toExternalForm()
-        } catch (e: Throwable) {
+        } catch (e: MalformedURLException) {
+            logger.error(e.localizedMessage, e)
             null
         }
     }
@@ -93,6 +103,7 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
                     .build()
             ).toExternalForm()
         } catch (e: MalformedURLException) {
+            logger.error(e.localizedMessage, e)
             null
         }
     }
@@ -230,6 +241,64 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
             false
         }
     }
+
+    override fun getBucketPolicy(bucket: String): String? {
+        return try {
+            client.getBucketPolicy(
+                GetBucketPolicyRequest.builder()
+                    .bucket(bucket)
+                    .build()
+            ).policy()
+        } catch (e: S3Exception) {
+            if (e.statusCode() != 404) {
+                logger.error(e.localizedMessage, e)
+            }
+            null
+        }
+    }
+
+    override fun putBucketPolicy(
+        bucket: String,
+        confirmRemoveSelfBucketAccess: Boolean,
+        configure: PolicyBuilder.() -> Unit
+    ): Boolean {
+        return try {
+            val response = client.putBucketPolicy(
+                PutBucketPolicyRequest.builder()
+                    .bucket(bucket)
+                    .confirmRemoveSelfBucketAccess(confirmRemoveSelfBucketAccess)
+                    .policy(PolicyBuilder().apply(configure).build())
+                    .build()
+            )
+            response.sdkHttpResponse().isSuccessful
+        } catch (e: S3Exception) {
+            logger.error(e.localizedMessage, e)
+            false
+        }
+    }
+
+    override fun deleteBucketPolicy(bucket: String): Boolean {
+        return try {
+            val response = client.deleteBucketPolicy(
+                DeleteBucketPolicyRequest.builder()
+                    .bucket(bucket)
+                    .build()
+            )
+            response.sdkHttpResponse().isSuccessful
+        } catch (e: S3Exception) {
+            logger.error(e.localizedMessage, e)
+            false
+        }
+    }
+
+    override fun buildStatement(configure: StatementBuilder.() -> Unit): Statement =
+        StatementBuilder().apply(configure).build()
+
+    override fun buildPrincipal(configure: PrincipalBuilder.() -> Unit): Principal =
+        PrincipalBuilder().apply(configure).build()
+
+    override fun buildResource(configure: ResourceBuilder.() -> Unit): String =
+        ResourceBuilder().apply(configure).build()
 
     companion object {
         private val logger = LoggerFactory.getLogger(S3StorageImpl::class.java)

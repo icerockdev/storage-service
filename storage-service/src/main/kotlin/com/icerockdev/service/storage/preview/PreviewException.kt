@@ -4,4 +4,4 @@
 
 package com.icerockdev.service.storage.preview
 
-class PreviewException(override val message: String?): Exception(message)
+class PreviewException(override val message: String?, override val cause: Throwable? = null): Exception(message, cause)

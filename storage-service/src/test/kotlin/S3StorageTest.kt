@@ -2,16 +2,21 @@
  * Copyright 2020 IceRock MAG Inc. Use of this source code is governed by the Apache 2.0 license.
  */
 
+import com.icerockdev.service.storage.Serializer
+import com.icerockdev.service.storage.exception.S3StorageException
 import com.icerockdev.service.storage.mime.MimeTypeDetector
 import com.icerockdev.service.storage.s3.IS3Storage
 import com.icerockdev.service.storage.s3.S3StorageImpl
 import com.icerockdev.service.storage.s3.minioConfBuilder
+import com.icerockdev.service.storage.s3.policy.dto.ActionEnum
+import com.icerockdev.service.storage.s3.policy.dto.EffectEnum
+import com.icerockdev.service.storage.s3.policy.dto.Policy
+import com.icerockdev.service.storage.s3.policy.dto.PrincipalEnum
 import io.github.cdimascio.dotenv.dotenv
 import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.net.URI
-import java.net.URLConnection
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
@@ -22,8 +27,11 @@ import java.time.Duration
 import kotlin.math.min
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -189,7 +197,6 @@ class S3StorageTest {
         }
     }
 
-
     @Test
     fun testPutMimeType() {
         // init storage
@@ -321,7 +328,7 @@ class S3StorageTest {
 
         val fileName = storage.generateFileKey()
         val stream = classLoader.getResourceAsStream(dotenv["JPG_TEST_OBJECT"])
-            ?: throw Exception("JPG File not found")
+            ?: throw S3StorageException("JPG File not found")
 
         // Check wrong cases
         assertFalse {
@@ -384,7 +391,7 @@ class S3StorageTest {
         val fileName2 = "temp/somefile"
 
         val file = classLoader.getResource(dotenv["JPG_TEST_OBJECT"])?.file
-            ?: throw Exception("JPG File not found")
+            ?: throw NullPointerException("JPG File not found")
         var stream = FileInputStream(file)
 
         storage.put(bucketName, fileName1, stream)
@@ -432,6 +439,119 @@ class S3StorageTest {
         assertEquals("application/octet-stream", MimeTypeDetector.detect(binStream).toString())
     }
 
+    @Test
+    fun testPolicy() {
+        if (!storage.bucketExist(bucketName)) {
+            storage.createBucket(bucketName)
+        }
+        val testStatement = storage.buildStatement {
+            effect = EffectEnum.ALLOW
+
+            action.add(ActionEnum.DELETE_OBJECT)
+            action.add(ActionEnum.GET_OBJECT)
+            action.add(ActionEnum.PUT_OBJECT)
+
+            resource.add(storage.buildResource {})
+
+            principal = storage.buildPrincipal {
+                aws.add(PrincipalEnum.PUBLIC_ACCESS.accessName)
+            }
+        }
+
+        val putPolicyResult = storage.putBucketPolicy(bucketName) {
+            statement.add(testStatement)
+        }
+        assertTrue(putPolicyResult)
+
+        val policyStatement = storage.getBucketPolicy(bucketName)?.let {
+            Serializer.deserialize<Policy>(it)
+        }?.statement?.first()
+
+        assertEquals(testStatement.action.sorted(), policyStatement?.action?.sorted())
+        assertEquals(testStatement.resource, policyStatement?.resource)
+        assertEquals(testStatement.effect, policyStatement?.effect)
+        assertEquals(testStatement.principal, policyStatement?.principal)
+        assertEquals(testStatement.principal?.aws, policyStatement?.principal?.aws)
+
+        val currentPolicy = storage.getBucketPolicy(bucketName)
+        assertNotNull(currentPolicy)
+
+        val bigTestStatement = storage.buildStatement {
+            effect = EffectEnum.ALLOW
+            action.add(ActionEnum.GET_OBJECT)
+            resource.add(
+                storage.buildResource {
+                    bucket = bucketName
+                }
+            )
+            for (bucketNum in 1..1000) {
+                resource.add(
+                    storage.buildResource {
+                        bucket = bucketName
+                        detailRoute = bucketNum.toString()
+                    }
+                )
+            }
+            principal = storage.buildPrincipal {
+                aws.add(PrincipalEnum.PUBLIC_ACCESS.accessName)
+            }
+        }
+        assertFailsWith<S3StorageException>(block = {
+            storage.putBucketPolicy(bucketName) {
+                statement.add(bigTestStatement)
+            }
+        })
+
+        assertNotEquals(
+            bigTestStatement.resource,
+            policyStatement?.resource
+        )
+
+        assertFailsWith<S3StorageException>(block = {
+            storage.buildStatement {
+                effect = EffectEnum.ALLOW
+                resource.add(storage.buildResource {})
+                principal = storage.buildPrincipal {
+                    aws.add(PrincipalEnum.PUBLIC_ACCESS.accessName)
+                }
+            }
+        })
+
+        assertFailsWith<S3StorageException>(block = {
+            storage.buildStatement {
+                effect = EffectEnum.ALLOW
+                resource.add(storage.buildResource {})
+                action.add(ActionEnum.GET_OBJECT)
+            }
+        })
+
+        assertFailsWith<S3StorageException>(block = {
+            storage.buildStatement {
+                effect = EffectEnum.ALLOW
+                action.add(ActionEnum.GET_OBJECT)
+                principal = storage.buildPrincipal {
+                    aws.add(PrincipalEnum.PUBLIC_ACCESS.accessName)
+                }
+            }
+        })
+
+        assertFailsWith<S3StorageException>(block = {
+            storage.buildStatement {
+                effect = EffectEnum.ALLOW
+                action.add(ActionEnum.GET_OBJECT)
+                resource.add(storage.buildResource { })
+                principal = storage.buildPrincipal {
+                }
+            }
+        })
+
+        val deletePolicyResult = storage.deleteBucketPolicy(bucketName)
+        assertTrue(deletePolicyResult)
+
+        val policyAfterDelete = storage.getBucketPolicy(bucketName)
+        assertNull(policyAfterDelete)
+    }
+
     @After
     fun close() {
         s3.close()
@@ -440,15 +560,15 @@ class S3StorageTest {
     private fun getFile(fileType: FileType): Pair<String, InputStream> {
         val key = storage.generateFileKey()
         val fileName = when (fileType) {
-            FileType.JPG -> dotenv["JPG_TEST_OBJECT"] ?: throw Exception("JPG File not found")
-            FileType.GIF -> dotenv["GIF_TEST_OBJECT"] ?: throw Exception("GIF File not found")
-            FileType.PNG -> dotenv["PNG_TEST_OBJECT"] ?: throw Exception("PNG File not found")
-            FileType.PDF -> dotenv["PDF_TEST_OBJECT"] ?: throw Exception("PDF File not found")
-            FileType.ZIP -> dotenv["ZIP_TEST_OBJECT"] ?: throw Exception("ZIP File not found")
-            FileType.BIN -> dotenv["BIN_TEST_OBJECT"] ?: throw Exception("BIN File not found")
+            FileType.JPG -> dotenv["JPG_TEST_OBJECT"] ?: throw S3StorageException("JPG File not found")
+            FileType.GIF -> dotenv["GIF_TEST_OBJECT"] ?: throw S3StorageException("GIF File not found")
+            FileType.PNG -> dotenv["PNG_TEST_OBJECT"] ?: throw S3StorageException("PNG File not found")
+            FileType.PDF -> dotenv["PDF_TEST_OBJECT"] ?: throw S3StorageException("PDF File not found")
+            FileType.ZIP -> dotenv["ZIP_TEST_OBJECT"] ?: throw S3StorageException("ZIP File not found")
+            FileType.BIN -> dotenv["BIN_TEST_OBJECT"] ?: throw S3StorageException("BIN File not found")
         }
 
-        return key to (classLoader.getResourceAsStream(fileName) ?: throw Exception("File not readable"))
+        return key to (classLoader.getResourceAsStream(fileName) ?: throw S3StorageException("File not readable"))
     }
 
     private enum class FileType {
@@ -481,10 +601,6 @@ class S3StorageTest {
             i1.close()
             i2.close()
         }
-    }
-
-    private fun getContentType(stream: InputStream): String? {
-        return URLConnection.guessContentTypeFromStream(stream)
     }
 
     companion object {

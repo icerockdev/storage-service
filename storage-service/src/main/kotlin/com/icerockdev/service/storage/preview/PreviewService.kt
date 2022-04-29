@@ -58,18 +58,23 @@ class PreviewService(
             storage.get(srcBucket, srcKey)?.use { it.readBytes() }
         } ?: return false
 
-        previewConfig.asFlow()
-            .buffer(configuration.operationParallel)
-            .flowOn(Dispatchers.IO)
-            .catch { cause ->
-                throw PreviewException(cause.localizedMessage, cause)
-            }
-            .collect {
-                val preview = it.imageProcessor(it, imageBytes)
-                val dstKey = getPreviewName(srcKey, it)
+        try {
+            previewConfig.asFlow()
+                .buffer(configuration.operationParallel)
+                .flowOn(Dispatchers.IO)
+                .catch { cause ->
+                    throw PreviewException(cause.localizedMessage, cause)
+                }
+                .collect {
+                    val preview = it.imageProcessor(it, imageBytes)
+                    val dstKey = getPreviewName(srcKey, it)
 
-                storage.put(dstBucket, dstKey, preview)
-            }
+                    storage.put(dstBucket, dstKey, preview)
+                }
+        } catch (e: PreviewException){
+            logger.error(e.localizedMessage, e)
+            return false
+        }
 
         return true
     }
@@ -82,16 +87,21 @@ class PreviewService(
             return true
         }
 
-        previewConfig.asFlow()
-            .buffer(configuration.operationParallel)
-            .flowOn(Dispatchers.IO)
-            .catch { cause ->
-                throw PreviewException(cause.localizedMessage, cause)
-            }
-            .collect {
-                val dstKey = getPreviewName(srcKey, it)
-                storage.delete(dstBucket, dstKey)
-            }
+        try {
+            previewConfig.asFlow()
+                .buffer(configuration.operationParallel)
+                .flowOn(Dispatchers.IO)
+                .catch { cause ->
+                    throw PreviewException(cause.localizedMessage, cause)
+                }
+                .collect {
+                    val dstKey = getPreviewName(srcKey, it)
+                    storage.delete(dstBucket, dstKey)
+                }
+        } catch (e: PreviewException){
+            logger.error(e.localizedMessage, e)
+            return false
+        }
 
         return true
     }

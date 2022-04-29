@@ -274,9 +274,6 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
         } catch (e: S3Exception) {
             logger.error(e.localizedMessage, e)
             false
-        } catch (e: S3Exception) {
-            logger.error(e.localizedMessage, e)
-            false
         }
     }
 

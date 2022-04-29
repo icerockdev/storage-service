@@ -39,7 +39,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:${properties["kotlin_version"]}")
     // Load configuration in tests
     testImplementation("io.github.cdimascio:java-dotenv:${properties["java_dotenv_version"]}")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:${properties["json_version"]}")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:${properties["jackson_version"]}")
 }
 
 java {

@@ -11,7 +11,6 @@ object Serializer {
         return objectMapper.writeValueAsString(obj)
     }
 
-    @Suppress("NON_PUBLIC_CALL_FROM_PUBLIC_INLINE")
     inline fun <reified T> deserialize(content: String): T {
         return objectMapper.readValue(content = content)
     }

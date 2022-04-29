@@ -2,7 +2,6 @@
  * Copyright 2020 IceRock MAG Inc. Use of this source code is governed by the Apache 2.0 license.
  */
 
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.icerockdev.service.storage.Serializer
 import com.icerockdev.service.storage.exception.S3StorageException
 import com.icerockdev.service.storage.mime.MimeTypeDetector
@@ -14,15 +13,6 @@ import com.icerockdev.service.storage.s3.policy.dto.EffectEnum
 import com.icerockdev.service.storage.s3.policy.dto.Policy
 import com.icerockdev.service.storage.s3.policy.dto.PrincipalEnum
 import io.github.cdimascio.dotenv.dotenv
-import kotlinx.coroutines.runBlocking
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
-import software.amazon.awssdk.regions.Region
-import software.amazon.awssdk.services.s3.S3Client
-import software.amazon.awssdk.services.s3.presigner.S3Presigner
 import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStream
@@ -43,6 +33,15 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlinx.coroutines.runBlocking
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.presigner.S3Presigner
 
 
 class S3StorageTest {
@@ -329,7 +328,7 @@ class S3StorageTest {
 
         val fileName = storage.generateFileKey()
         val stream = classLoader.getResourceAsStream(dotenv["JPG_TEST_OBJECT"])
-            ?: throw NullPointerException("JPG File not found")
+            ?: throw S3StorageException("JPG File not found")
 
         // Check wrong cases
         assertFalse {
@@ -561,15 +560,15 @@ class S3StorageTest {
     private fun getFile(fileType: FileType): Pair<String, InputStream> {
         val key = storage.generateFileKey()
         val fileName = when (fileType) {
-            FileType.JPG -> dotenv["JPG_TEST_OBJECT"] ?: throw Exception("JPG File not found")
-            FileType.GIF -> dotenv["GIF_TEST_OBJECT"] ?: throw Exception("GIF File not found")
-            FileType.PNG -> dotenv["PNG_TEST_OBJECT"] ?: throw Exception("PNG File not found")
-            FileType.PDF -> dotenv["PDF_TEST_OBJECT"] ?: throw Exception("PDF File not found")
-            FileType.ZIP -> dotenv["ZIP_TEST_OBJECT"] ?: throw Exception("ZIP File not found")
-            FileType.BIN -> dotenv["BIN_TEST_OBJECT"] ?: throw Exception("BIN File not found")
+            FileType.JPG -> dotenv["JPG_TEST_OBJECT"] ?: throw S3StorageException("JPG File not found")
+            FileType.GIF -> dotenv["GIF_TEST_OBJECT"] ?: throw S3StorageException("GIF File not found")
+            FileType.PNG -> dotenv["PNG_TEST_OBJECT"] ?: throw S3StorageException("PNG File not found")
+            FileType.PDF -> dotenv["PDF_TEST_OBJECT"] ?: throw S3StorageException("PDF File not found")
+            FileType.ZIP -> dotenv["ZIP_TEST_OBJECT"] ?: throw S3StorageException("ZIP File not found")
+            FileType.BIN -> dotenv["BIN_TEST_OBJECT"] ?: throw S3StorageException("BIN File not found")
         }
 
-        return key to (classLoader.getResourceAsStream(fileName) ?: throw Exception("File not readable"))
+        return key to (classLoader.getResourceAsStream(fileName) ?: throw S3StorageException("File not readable"))
     }
 
     private enum class FileType {

@@ -19,11 +19,11 @@ version = "0.0.1"
 apply(plugin = "kotlin")
 
 repositories {
-    maven { setUrl("https://dl.bintray.com/icerockdev/backend") }
+    mavenCentral()
 }
 
 application {
-    mainClassName = "com.icerockdev.sample.Main"
+    mainClass.set("com.icerockdev.sample.Main")
 }
 
 dependencies {

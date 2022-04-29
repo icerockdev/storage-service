@@ -10,7 +10,7 @@ repositories {
 }
 
 // Append dependency
-implementation("com.icerockdev:storage-service:0.5.3")
+implementation("com.icerockdev:storage-service:0.6.0")
 ````
 
 ## Library usage
@@ -23,6 +23,7 @@ Lib include tools for:
     - delete bucket
     - copy object (including between buckets)
     - delete bucket with content
+    - bucket policy
     - samples on test and sample http server 
  - Preview
     - PreviewService 

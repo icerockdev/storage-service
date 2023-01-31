@@ -15,7 +15,7 @@ apply(plugin = "java")
 apply(plugin = "kotlin")
 
 group = "com.icerockdev"
-version = "0.6.0"
+version = "0.7.0"
 
 val sourcesJar by tasks.registering(Jar::class) {
     archiveClassifier.set("sources")
@@ -23,8 +23,6 @@ val sourcesJar by tasks.registering(Jar::class) {
 }
 
 dependencies {
-    // Kotlin
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${properties["kotlin_version"]}")
     // AWS S3 SDK
     api("software.amazon.awssdk:s3:${properties["aws_sdk_s3_version"]}")
     // Apache Tika

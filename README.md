@@ -10,7 +10,7 @@ repositories {
 }
 
 // Append dependency
-implementation("com.icerockdev:storage-service:0.6.0")
+implementation("com.icerockdev:storage-service:0.7.0")
 ````
 
 ## Library usage

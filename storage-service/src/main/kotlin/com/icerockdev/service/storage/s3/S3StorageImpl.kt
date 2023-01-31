@@ -42,8 +42,6 @@ import java.io.BufferedInputStream
 import java.io.InputStream
 import java.net.MalformedURLException
 import java.net.URI
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 import java.time.Duration
 
 /**
@@ -211,9 +209,9 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
     override fun copy(srcBucket: String, srcKey: String, dstBucket: String, dstKey: String): Boolean {
 
         return try {
-            val encodedUrl = URLEncoder.encode("$srcBucket/$srcKey", StandardCharsets.UTF_8.toString())
             val request = CopyObjectRequest.builder()
-                .copySource(encodedUrl)
+                .sourceBucket(srcBucket)
+                .sourceKey(srcKey)
                 .destinationBucket(dstBucket)
                 .destinationKey(dstKey)
                 .build()

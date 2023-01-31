@@ -180,7 +180,7 @@ class S3StorageTest {
         }
 
         assertFalse {
-            storage.deleteBucket("another bucket")
+            storage.deleteBucket("another-bucket")
         }
 
         // check correct delete

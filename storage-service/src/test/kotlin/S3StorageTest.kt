@@ -8,6 +8,7 @@ import com.icerockdev.service.storage.mime.MimeTypeDetector
 import com.icerockdev.service.storage.s3.IS3Storage
 import com.icerockdev.service.storage.s3.S3StorageImpl
 import com.icerockdev.service.storage.s3.minioConfBuilder
+import com.icerockdev.service.storage.s3.dto.FileObjectDto
 import com.icerockdev.service.storage.s3.policy.dto.ActionEnum
 import com.icerockdev.service.storage.s3.policy.dto.EffectEnum
 import com.icerockdev.service.storage.s3.policy.dto.Policy
@@ -253,15 +254,13 @@ class S3StorageTest {
 
         val (jpgFileName, jpgStream) = getFile(FileType.JPG)
         val mimeType = MimeTypeDetector.detect(jpgStream)
-        val jpgFileByteArray = jpgStream.readAllBytes()
-
-        jpgStream.close()
+        val fileSize = jpgStream.available().toLong()
 
         // Check wrong cases
         assertFalse(storage.objectExists(bucketName, jpgFileName))
 
         // Put object to storage
-        assertTrue(storage.put(bucketName, jpgFileName, jpgFileByteArray.inputStream()))
+        assertTrue(storage.put(bucketName, jpgFileName, FileObjectDto(jpgStream.buffered(), fileSize)))
 
         // Check object exist
         assertTrue(storage.objectExists(bucketName, jpgFileName))
@@ -271,7 +270,7 @@ class S3StorageTest {
         assertEquals("image/jpeg", mimeType.toString())
         assertEquals(mimeType.toString(), jpgObject?.response()?.contentType())
 
-        assertEquals(jpgFileByteArray.size.toLong(), jpgObject?.response()?.contentLength())
+        assertEquals(fileSize, jpgObject?.response()?.contentLength())
 
         assertTrue {
             storage.deleteBucketWithObjects(bucketName)

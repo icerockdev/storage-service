@@ -4,12 +4,12 @@
 
 package com.icerockdev.service.storage.s3
 
+import com.icerockdev.service.storage.s3.dto.FileObjectDto
 import com.icerockdev.service.storage.s3.policy.builder.PolicyBuilder
 import com.icerockdev.service.storage.s3.policy.builder.PrincipalBuilder
 import com.icerockdev.service.storage.s3.policy.builder.ResourceBuilder
 import com.icerockdev.service.storage.s3.policy.builder.StatementBuilder
 import com.icerockdev.service.storage.s3.policy.dto.Principal
-import com.icerockdev.service.storage.s3.policy.dto.Resource
 import com.icerockdev.service.storage.s3.policy.dto.Statement
 import software.amazon.awssdk.core.ResponseInputStream
 import software.amazon.awssdk.services.s3.S3Configuration
@@ -44,7 +44,10 @@ interface IS3Storage {
 
     fun put(bucket: String, key: String, stream: InputStream, metadata: Map<String, String>? = null): Boolean
 
+    @Deprecated("Pointless method that simply wraps byteArray")
     fun put(bucket: String, key: String, byteArray: ByteArray, metadata: Map<String, String>? = null): Boolean
+
+    fun put(bucket: String, key: String, file: FileObjectDto, metadata: Map<String, String>? = null): Boolean
 
     fun copy(srcBucket: String, srcKey: String, dstBucket: String, dstKey: String): Boolean
 
@@ -59,7 +62,11 @@ interface IS3Storage {
 
     fun getBucketPolicy(bucket: String): String?
 
-    fun putBucketPolicy(bucket: String, confirmRemoveSelfBucketAccess: Boolean = false, configure: PolicyBuilder.() -> Unit): Boolean
+    fun putBucketPolicy(
+        bucket: String,
+        confirmRemoveSelfBucketAccess: Boolean = false,
+        configure: PolicyBuilder.() -> Unit
+    ): Boolean
 
     fun deleteBucketPolicy(bucket: String): Boolean
 

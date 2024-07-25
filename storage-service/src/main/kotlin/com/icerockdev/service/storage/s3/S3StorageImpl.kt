@@ -5,6 +5,7 @@
 package com.icerockdev.service.storage.s3
 
 import com.icerockdev.service.storage.mime.MimeTypeDetector
+import com.icerockdev.service.storage.s3.dto.FileObjectDto
 import com.icerockdev.service.storage.s3.policy.builder.PolicyBuilder
 import com.icerockdev.service.storage.s3.policy.builder.PrincipalBuilder
 import com.icerockdev.service.storage.s3.policy.builder.ResourceBuilder
@@ -58,6 +59,7 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
                     .build()
             )
         } catch (e: NoSuchKeyException) {
+            logger.debug(e.localizedMessage, e)
             null
         }
     }
@@ -125,6 +127,7 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
             client.headBucket(HeadBucketRequest.builder().bucket(bucket).build())
             true
         } catch (e: NoSuchBucketException) {
+            logger.debug(e.localizedMessage, e)
             false
         }
     }
@@ -139,11 +142,13 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
             )
             true
         } catch (e: BucketAlreadyExistsException) {
+            logger.debug(e.localizedMessage, e)
             false
         } catch (e: BucketAlreadyOwnedByYouException) {
+            logger.debug(e.localizedMessage, e)
             false
         } catch (e: S3Exception) {
-            logger.error(e.localizedMessage, e)
+            logger.debug(e.localizedMessage, e)
             false
         }
     }
@@ -153,6 +158,7 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
             client.deleteBucket(DeleteBucketRequest.builder().bucket(bucket).build())
             true
         } catch (e: NoSuchBucketException) {
+            logger.debug(e.localizedMessage, e)
             false
         }
     }
@@ -174,6 +180,7 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
             )
             true
         } catch (e: NoSuchKeyException) {
+            logger.debug(e.localizedMessage, e)
             false
         }
     }
@@ -182,6 +189,7 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
         return put(bucket, key, stream.buffered(), metadata)
     }
 
+    @Deprecated("Pointless method that simply wraps byteArray")
     override fun put(bucket: String, key: String, byteArray: ByteArray, metadata: Map<String, String>?): Boolean {
         val stream = byteArray.inputStream().buffered()
         return put(bucket, key, stream, metadata)
@@ -202,6 +210,28 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
             client.putObject(request, RequestBody.fromBytes(stream.readBytes()))
             true
         } catch (e: S3Exception) {
+            logger.debug(e.localizedMessage, e)
+            false
+        }
+    }
+
+    override fun put(bucket: String, key: String, file: FileObjectDto, metadata: Map<String, String>?): Boolean {
+
+        val request = PutObjectRequest.builder()
+            .bucket(bucket)
+            .key(key)
+            .acl(ObjectCannedACL.PUBLIC_READ)
+            .contentEncoding("UTF-8")
+            .contentType(MimeTypeDetector.detect(file.inputStream).toString())
+            .metadata(metadata ?: emptyMap())
+            .contentLength(file.size)
+            .build()
+
+        return try {
+            client.putObject(request, RequestBody.fromInputStream(file.inputStream, file.size))
+            true
+        } catch (e: S3Exception) {
+            logger.debug(e.localizedMessage, e)
             false
         }
     }
@@ -219,8 +249,10 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
             client.copyObject(request)
             true
         } catch (e: NoSuchBucketException) {
+            logger.debug(e.localizedMessage, e)
             false
         } catch (e: NoSuchKeyException) {
+            logger.debug(e.localizedMessage, e)
             false
         }
     }

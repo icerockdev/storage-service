@@ -5,11 +5,11 @@
 package com.icerockdev.service.storage.preview
 
 import com.icerockdev.service.storage.s3.IS3Storage
+import com.icerockdev.service.storage.s3.dto.FileObjectDto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
@@ -69,7 +69,11 @@ class PreviewService(
                     val preview = it.imageProcessor(it, imageBytes)
                     val dstKey = getPreviewName(srcKey, it)
 
-                    storage.put(dstBucket, dstKey, preview)
+                    storage.put(
+                        dstBucket,
+                        dstKey,
+                        FileObjectDto(preview.inputStream().buffered(), preview.size.toLong())
+                    )
                 }
         } catch (e: PreviewException){
             logger.error(e.localizedMessage, e)

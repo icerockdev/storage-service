@@ -16,6 +16,6 @@ jobs:
       with:
         java-version: 11
     - name: Start containers
-      run: docker-compose up -d
+      run: docker compose up -d
     - name: Build and test
       run: ./gradlew build

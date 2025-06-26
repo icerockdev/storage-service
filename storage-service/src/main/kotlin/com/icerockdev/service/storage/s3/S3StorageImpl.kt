@@ -222,7 +222,7 @@ class S3StorageImpl(private val client: S3Client, private val preSigner: S3Presi
             .key(key)
             .acl(ObjectCannedACL.PUBLIC_READ)
             .contentEncoding("UTF-8")
-            .contentType(MimeTypeDetector.detect(file.inputStream).toString())
+            .contentType(file.contentType ?: MimeTypeDetector.detect(file.inputStream).toString())
             .metadata(metadata ?: emptyMap())
             .contentLength(file.size)
             .build()

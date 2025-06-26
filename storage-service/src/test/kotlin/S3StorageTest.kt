@@ -278,6 +278,44 @@ class S3StorageTest {
     }
 
     @Test
+    fun testForceFileSizeAndType() {
+        // init storage
+        if (!storage.bucketExist(bucketName)) {
+            storage.createBucket(bucketName)
+        }
+
+        val (svgFileName, svgStream) = getFile(FileType.SVG)
+        val mimeType = "image/svg+xml"
+        val fileSize = svgStream.available().toLong()
+
+        // Check wrong cases
+        assertFalse(storage.objectExists(bucketName, svgFileName))
+
+        // Put object to storage
+        assertTrue(
+            storage.put(
+                bucketName, svgFileName, FileObjectDto(
+                    inputStream = svgStream.buffered(),
+                    size = fileSize,
+                    contentType = mimeType
+                )
+            )
+        )
+
+        // Check object exist
+        assertTrue(storage.objectExists(bucketName, svgFileName))
+
+        val svgObject = storage.get(bucketName, svgFileName)
+
+        assertEquals(mimeType, svgObject?.response()?.contentType())
+        assertEquals(fileSize, svgObject?.response()?.contentLength())
+
+        assertTrue {
+            storage.deleteBucketWithObjects(bucketName)
+        }
+    }
+
+    @Test
     fun testMetadata() {
         // init storage
         if (!storage.bucketExist(bucketName)) {
@@ -565,6 +603,7 @@ class S3StorageTest {
             FileType.PDF -> dotenv["PDF_TEST_OBJECT"] ?: throw S3StorageException("PDF File not found")
             FileType.ZIP -> dotenv["ZIP_TEST_OBJECT"] ?: throw S3StorageException("ZIP File not found")
             FileType.BIN -> dotenv["BIN_TEST_OBJECT"] ?: throw S3StorageException("BIN File not found")
+            FileType.SVG -> dotenv["SVG_TEST_OBJECT"] ?: throw S3StorageException("SVG File not found")
         }
 
         return key to (classLoader.getResourceAsStream(fileName) ?: throw S3StorageException("File not readable"))
@@ -576,7 +615,8 @@ class S3StorageTest {
         PNG,
         PDF,
         ZIP,
-        BIN;
+        BIN,
+        SVG;
     }
 
     @Throws(IOException::class)

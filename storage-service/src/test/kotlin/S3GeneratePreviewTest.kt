@@ -42,7 +42,7 @@ class S3GeneratePreviewTest {
             .credentialsProvider(
                 StaticCredentialsProvider.create(
                     AwsBasicCredentials.create(
-                        dotenv["MINIO_ACCESS_KEY"], dotenv["MINIO_SECRET_KEY"]
+                        dotenv["RUSTFS_ACCESS_KEY"], dotenv["RUSTFS_SECRET_KEY"]
                     )
                 )
             )
@@ -55,7 +55,7 @@ class S3GeneratePreviewTest {
             .credentialsProvider(
                 StaticCredentialsProvider.create(
                     AwsBasicCredentials.create(
-                        dotenv["MINIO_ACCESS_KEY"], dotenv["MINIO_SECRET_KEY"]
+                        dotenv["RUSTFS_ACCESS_KEY"], dotenv["RUSTFS_SECRET_KEY"]
                     )
                 )
             )

@@ -1,18 +1,17 @@
 version: '3'
 services:
-  minio:
-    image: minio/minio
+  rustfs:
+    image: rustfs/rustfs
     restart: always
     logging:
       driver: "json-file"
       options:
         max-size: "20m"
         max-file: "5"
-    environment:
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
     ports:
       - ${APP_HOST}:9000:9000
+    environment:
+      RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY}
+      RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY}
     volumes:
       - ./data:/data
-    command: 'server /data'

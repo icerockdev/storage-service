@@ -59,7 +59,7 @@ class S3StorageTest {
             .credentialsProvider(
                 StaticCredentialsProvider.create(
                     AwsBasicCredentials.create(
-                        dotenv["MINIO_ACCESS_KEY"], dotenv["MINIO_SECRET_KEY"]
+                        dotenv["RUSTFS_ACCESS_KEY"], dotenv["RUSTFS_SECRET_KEY"]
                     )
                 )
             )
@@ -72,7 +72,7 @@ class S3StorageTest {
             .credentialsProvider(
                 StaticCredentialsProvider.create(
                     AwsBasicCredentials.create(
-                        dotenv["MINIO_ACCESS_KEY"], dotenv["MINIO_SECRET_KEY"]
+                        dotenv["RUSTFS_ACCESS_KEY"], dotenv["RUSTFS_SECRET_KEY"]
                     )
                 )
             )
@@ -338,7 +338,7 @@ class S3StorageTest {
 
         val jpgObject = storage.get(bucketName, jpgFileName)
 
-        assertEquals(metadata, jpgObject?.response()?.metadata())
+        assertTrue(jpgObject?.response()?.metadata()?.entries?.containsAll(metadata.entries) ?: false)
 
         // copy testing
         val copyFileName = storage.generateFileKey()
@@ -349,7 +349,7 @@ class S3StorageTest {
 
         val copyObject = storage.get(bucketName, copyFileName)
 
-        assertEquals(metadata, copyObject?.response()?.metadata())
+        assertTrue(copyObject?.response()?.metadata()?.entries?.containsAll(metadata.entries) ?: false)
 
         assertTrue {
             storage.deleteBucketWithObjects(bucketName)

@@ -16,3 +16,4 @@ services:
     volumes:
       - ./data:/data
     command: 'server /data'
+

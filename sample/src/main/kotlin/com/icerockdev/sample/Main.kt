@@ -5,7 +5,7 @@
 package com.icerockdev.sample
 
 import com.icerockdev.service.storage.s3.S3StorageImpl
-import com.icerockdev.service.storage.s3.minioConfBuilder
+import com.icerockdev.service.storage.s3.s3Configuration
 import io.github.cdimascio.dotenv.dotenv
 import io.ktor.http.ContentType
 import io.ktor.http.content.PartData
@@ -31,11 +31,11 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner
 object Main {
     private val dotenv = dotenv()
     private val s3 = S3Client.builder()
-        .serviceConfiguration(minioConfBuilder)
+        .serviceConfiguration(s3Configuration)
         .credentialsProvider(
             StaticCredentialsProvider.create(
                 AwsBasicCredentials.create(
-                    dotenv["RUSTFS_ACCESS_KEY"], dotenv["RUSTFS_SECRET_KEY"]
+                    dotenv["S3_ACCESS_KEY"], dotenv["S3_SECRET_KEY"]
                 )
             )
         )
@@ -44,11 +44,11 @@ object Main {
         .build()
 
     private val preSigner = S3Presigner.builder()
-        .serviceConfiguration(minioConfBuilder)
+        .serviceConfiguration(s3Configuration)
         .credentialsProvider(
             StaticCredentialsProvider.create(
                 AwsBasicCredentials.create(
-                    dotenv["RUSTFS_ACCESS_KEY"], dotenv["RUSTFS_SECRET_KEY"]
+                    dotenv["S3_ACCESS_KEY"], dotenv["S3_SECRET_KEY"]
                 )
             )
         )

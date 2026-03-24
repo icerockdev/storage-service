@@ -77,7 +77,7 @@ interface IS3Storage {
     fun buildResource(configure: ResourceBuilder.() -> Unit): String
 }
 
-val minioConfBuilder: S3Configuration =
+val s3Configuration: S3Configuration =
     S3Configuration
         .builder()
         .pathStyleAccessEnabled(true)

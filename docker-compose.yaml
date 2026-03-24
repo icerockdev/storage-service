@@ -3,15 +3,45 @@ services:
   rustfs:
     image: rustfs/rustfs
     restart: always
-    logging:
+    logging: &logging
       driver: "json-file"
       options:
         max-size: "20m"
         max-file: "5"
     ports:
-      - 9001:9000
+      - "${APP_HOST}:9000:9000"
+      - "${APP_HOST}:9001:9001"
     environment:
-      RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY}
-      RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY}
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY}
     volumes:
-      - ./data:/data
+      - ./rustfs-data:/data
+    profiles:
+      - rustfs
+  rustfs-volume-permission-helper:
+    image: alpine
+    volumes:
+      - ./rustfs-data:/data
+    command: >
+      sh -c "
+        chown -R 10001:10001 /data &&
+        echo 'Volume Permissions fixed' &&
+        exit 0
+      "
+    restart: "no"
+    profiles:
+      - rustfs
+  minio:
+    image: minio/minio
+    restart: always
+    logging: *logging
+    environment:
+      MINIO_ACCESS_KEY: ${S3_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${S3_SECRET_KEY}
+    ports:
+      - "${APP_HOST}:9000:9000"
+    volumes:
+      - ./minio-data:/data
+    command: 'server /data'
+    profiles:
+      - minio

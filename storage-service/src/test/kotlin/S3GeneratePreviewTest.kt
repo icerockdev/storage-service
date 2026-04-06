@@ -11,7 +11,7 @@ import com.icerockdev.service.storage.preview.boundImage
 import com.icerockdev.service.storage.preview.loadImage
 import com.icerockdev.service.storage.s3.IS3Storage
 import com.icerockdev.service.storage.s3.S3StorageImpl
-import com.icerockdev.service.storage.s3.minioConfBuilder
+import com.icerockdev.service.storage.s3.s3Configuration
 import io.github.cdimascio.dotenv.dotenv
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -38,11 +38,11 @@ class S3GeneratePreviewTest {
     @Before
     fun init() {
         s3 = S3Client.builder()
-            .serviceConfiguration(minioConfBuilder)
+            .serviceConfiguration(s3Configuration)
             .credentialsProvider(
                 StaticCredentialsProvider.create(
                     AwsBasicCredentials.create(
-                        dotenv["MINIO_ACCESS_KEY"], dotenv["MINIO_SECRET_KEY"]
+                        dotenv["S3_ACCESS_KEY"], dotenv["S3_SECRET_KEY"]
                     )
                 )
             )
@@ -51,11 +51,11 @@ class S3GeneratePreviewTest {
             .build()
 
         preSigner = S3Presigner.builder()
-            .serviceConfiguration(minioConfBuilder)
+            .serviceConfiguration(s3Configuration)
             .credentialsProvider(
                 StaticCredentialsProvider.create(
                     AwsBasicCredentials.create(
-                        dotenv["MINIO_ACCESS_KEY"], dotenv["MINIO_SECRET_KEY"]
+                        dotenv["S3_ACCESS_KEY"], dotenv["S3_SECRET_KEY"]
                     )
                 )
             )

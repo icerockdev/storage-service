@@ -2,3 +2,5 @@ build
 /.gradle
 /.idea
 /data
+/minio-data
+/rustfs-data

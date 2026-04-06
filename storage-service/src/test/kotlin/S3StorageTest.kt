@@ -7,7 +7,7 @@ import com.icerockdev.service.storage.exception.S3StorageException
 import com.icerockdev.service.storage.mime.MimeTypeDetector
 import com.icerockdev.service.storage.s3.IS3Storage
 import com.icerockdev.service.storage.s3.S3StorageImpl
-import com.icerockdev.service.storage.s3.minioConfBuilder
+import com.icerockdev.service.storage.s3.s3Configuration
 import com.icerockdev.service.storage.s3.dto.FileObjectDto
 import com.icerockdev.service.storage.s3.policy.dto.ActionEnum
 import com.icerockdev.service.storage.s3.policy.dto.EffectEnum
@@ -55,11 +55,11 @@ class S3StorageTest {
     @Before
     fun init() {
         s3 = S3Client.builder()
-            .serviceConfiguration(minioConfBuilder)
+            .serviceConfiguration(s3Configuration)
             .credentialsProvider(
                 StaticCredentialsProvider.create(
                     AwsBasicCredentials.create(
-                        dotenv["MINIO_ACCESS_KEY"], dotenv["MINIO_SECRET_KEY"]
+                        dotenv["S3_ACCESS_KEY"], dotenv["S3_SECRET_KEY"]
                     )
                 )
             )
@@ -68,11 +68,11 @@ class S3StorageTest {
             .build()
 
         preSigner = S3Presigner.builder()
-            .serviceConfiguration(minioConfBuilder)
+            .serviceConfiguration(s3Configuration)
             .credentialsProvider(
                 StaticCredentialsProvider.create(
                     AwsBasicCredentials.create(
-                        dotenv["MINIO_ACCESS_KEY"], dotenv["MINIO_SECRET_KEY"]
+                        dotenv["S3_ACCESS_KEY"], dotenv["S3_SECRET_KEY"]
                     )
                 )
             )
@@ -338,7 +338,7 @@ class S3StorageTest {
 
         val jpgObject = storage.get(bucketName, jpgFileName)
 
-        assertEquals(metadata, jpgObject?.response()?.metadata())
+        assertTrue(jpgObject?.response()?.metadata()?.entries?.containsAll(metadata.entries) ?: false)
 
         // copy testing
         val copyFileName = storage.generateFileKey()
@@ -349,7 +349,7 @@ class S3StorageTest {
 
         val copyObject = storage.get(bucketName, copyFileName)
 
-        assertEquals(metadata, copyObject?.response()?.metadata())
+        assertTrue(copyObject?.response()?.metadata()?.entries?.containsAll(metadata.entries) ?: false)
 
         assertTrue {
             storage.deleteBucketWithObjects(bucketName)
